@@ -51,7 +51,6 @@
 - `backend/`：Spring Boot 后端服务
 - `parser-worker/`：Python 解析与索引 worker
 - `scripts/`：本地开发、联调、验收脚本
-- `deploy/linux/`：Host Linux 部署脚本
-- `deploy/systemd/`：systemd 服务配置
+- `deploy/linux/`：Host Linux 部署脚本与 systemd unit 文件
 - `deploy/docker/`：Docker 部署文件
 - `docs/`：架构、开发、部署、运维文档

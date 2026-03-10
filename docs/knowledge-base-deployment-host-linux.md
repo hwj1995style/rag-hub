@@ -102,9 +102,8 @@ vi /app/kb/config/kb.env
 
 相关文件：
 
-- `deploy/systemd/rag-hub-backend.service`
-- `deploy/systemd/rag-hub-parser-worker.service`
-- `deploy/systemd/README.md`
+- `deploy/linux/systemd/rag-hub-backend.service`
+- `deploy/linux/systemd/rag-hub-parser-worker.service`
 - `deploy/nginx/kb.conf`
 - `deploy/nginx/README.md`
 

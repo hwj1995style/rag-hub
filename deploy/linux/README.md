@@ -1,8 +1,8 @@
-﻿# Host Linux 部署脚本说明
+# Host Linux 部署脚本说明
 
 ## 1. 作用
 
-本目录保存 Host Linux 直装部署使用的脚本。
+本目录保存 Host Linux 直装部署使用的脚本，以及配套的 systemd unit 文件。
 
 ## 2. 文件清单
 
@@ -14,6 +14,8 @@
 - `rollback_parser_worker.sh`
 - `verify_deployment.sh`
 - `kb.env.template`
+- `systemd/rag-hub-backend.service`
+- `systemd/rag-hub-parser-worker.service`
 
 ## 3. 推荐使用顺序
 
