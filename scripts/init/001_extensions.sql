@@ -1,0 +1,2 @@
+-- MySQL 8.0 does not require PostgreSQL-style extensions.
+-- Reserved for future bootstrap SQL.

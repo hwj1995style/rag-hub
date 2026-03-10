@@ -1,0 +1,250 @@
+package com.example.kb;
+
+import static org.hamcrest.Matchers.hasSize;
+import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+
+import com.example.kb.repository.KbPermissionPolicyRepository;
+import com.example.kb.repository.KbQueryLogRepository;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.UUID;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
+
+@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles("test")
+@Sql(scripts = {"classpath:sql/cleanup.sql", "classpath:sql/seed-test-data.sql"}, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+class KnowledgeBaseApiIntegrationTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    @Autowired
+    private KbQueryLogRepository queryLogRepository;
+
+    @Autowired
+    private KbPermissionPolicyRepository permissionPolicyRepository;
+
+    @Test
+    void shouldLoginAndReturnJwtToken() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "tester",
+                                  "password": "test123456"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code", is("KB-00000")))
+                .andExpect(jsonPath("$.data.tokenType", is("Bearer")))
+                .andExpect(jsonPath("$.data.accessToken").isString())
+                .andExpect(jsonPath("$.data.user.username", is("tester")))
+                .andExpect(jsonPath("$.data.user.roleCode", is("admin")));
+    }
+
+    @Test
+    void shouldRejectBadCredentials() throws Exception {
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "tester",
+                                  "password": "wrong-password"
+                                }
+                                """))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code", is("KB-40102")));
+    }
+
+    @Test
+    void shouldRequireAuthenticationForProtectedApis() throws Exception {
+        mockMvc.perform(get("/api/documents"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.code", is("KB-40101")));
+    }
+
+    @Test
+    void shouldListSeedDocuments() throws Exception {
+        mockMvc.perform(get("/api/documents")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code", is("KB-00000")))
+                .andExpect(jsonPath("$.data.total", is(1)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].documentId", is("11111111-1111-1111-1111-111111111111")))
+                .andExpect(jsonPath("$.data.items[0].title", is("Customer Credit Policy")));
+    }
+
+    @Test
+    void shouldReturnDocumentDetail() throws Exception {
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.document_id", is("11111111-1111-1111-1111-111111111111")))
+                .andExpect(jsonPath("$.data.current_version.version_id", is("22222222-2222-2222-2222-222222222222")))
+                .andExpect(jsonPath("$.data.current_version.version_no", is("v1.0")));
+    }
+
+    @Test
+    void shouldReturnDocumentChunks() throws Exception {
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111/chunks")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(3)))
+                .andExpect(jsonPath("$.data.items", hasSize(3)));
+    }
+
+    @Test
+    void shouldReturnTaskById() throws Exception {
+        mockMvc.perform(get("/api/tasks/44444444-4444-4444-4444-444444444444")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.taskId", is("44444444-4444-4444-4444-444444444444")))
+                .andExpect(jsonPath("$.data.status", is("success")));
+    }
+
+    @Test
+    void shouldReturnQueryLogById() throws Exception {
+        mockMvc.perform(get("/api/query-logs/66666666-6666-6666-6666-666666666666")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.log_id", is("66666666-6666-6666-6666-666666666666")))
+                .andExpect(jsonPath("$.data.query_text", is("What materials are required for credit approval")))
+                .andExpect(jsonPath("$.data.rewritten_query", is("credit approval required materials checklist")))
+                .andExpect(jsonPath("$.data.retrieved_chunk_ids", hasSize(1)))
+                .andExpect(jsonPath("$.data.citations", hasSize(1)));
+    }
+
+    @Test
+    void shouldPersistQueryLogWhenQaCalled() throws Exception {
+        long before = queryLogRepository.count();
+
+        mockMvc.perform(post("/api/qa/query")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "business license",
+                                  "topK": 5,
+                                  "returnCitations": true,
+                                  "sessionId": "itest-session-001"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.retrievedCount", is(1)))
+                .andExpect(jsonPath("$.data.citations", hasSize(1)));
+
+        Assertions.assertEquals(before + 1, queryLogRepository.count());
+    }
+
+    @Test
+    void shouldBindPermissionsPersistently() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "admin", "effect": "allow"},
+                                    {"subjectType": "department", "subjectValue": "RiskMgmt", "effect": "allow"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.policy_count", is(2)));
+
+        Assertions.assertEquals(2,
+                permissionPolicyRepository.findByResourceTypeAndResourceId("document",
+                        UUID.fromString("11111111-1111-1111-1111-111111111111")).size());
+    }
+
+    @Test
+    void shouldRejectPermissionBindingForNonAdmin() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": []
+                                }
+                                """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code", is("KB-40301")));
+    }
+
+    @Test
+    void shouldActivateVersionPersistently() throws Exception {
+        mockMvc.perform(post("/api/documents/11111111-1111-1111-1111-111111111111/versions/22222222-2222-2222-2222-222222222223/activate")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "effectiveFrom": "2026-03-10T00:00:00+08:00",
+                                  "remark": "switch to history version"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.version_id", is("22222222-2222-2222-2222-222222222223")));
+
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.current_version.version_id", is("22222222-2222-2222-2222-222222222223")))
+                .andExpect(jsonPath("$.data.current_version.version_no", is("v0.9")));
+    }
+
+    @Test
+    void shouldSearchSeedChunks() throws Exception {
+        mockMvc.perform(post("/api/search/query")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "business license",
+                                  "topK": 10
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(1)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].locator", is("p12")));
+    }
+
+    private String bearerToken(String username, String password) throws Exception {
+        MvcResult result = mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "username": "%s",
+                                  "password": "%s"
+                                }
+                                """.formatted(username, password)))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode json = objectMapper.readTree(result.getResponse().getContentAsString());
+        return "Bearer " + json.path("data").path("accessToken").asText();
+    }
+}

@@ -1,0 +1,11 @@
+.m2/
+.runtime/
+.tools/
+tools/
+dist/
+data/
+**/target/
+*.log
+*.tmp
+Thumbs.db
+.DS_Store

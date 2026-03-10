@@ -1,0 +1,31 @@
+worker:
+  poll_interval_seconds: 5
+  batch_size: 5
+  download_dir: ./tmp/downloads
+  chunk_size: 500
+  max_chunk_size: 800
+
+database:
+  host: ${KB_DB_HOST:127.0.0.1}
+  port: ${KB_DB_PORT:3306}
+  dbname: ${KB_DB_NAME:kb}
+  user: ${KB_DB_USER:kb_user}
+  password: ${KB_DB_PASSWORD:change_me}
+
+storage:
+  mode: local
+  upload_root: ./mock-storage
+
+search:
+  enabled: ${KB_ES_ENABLED:true}
+  endpoint: ${KB_ES_ENDPOINT:http://127.0.0.1:9200}
+  index_name: ${KB_ES_INDEX:kb_chunk}
+  timeout_seconds: 10
+
+vector:
+  enabled: ${KB_VECTOR_ENABLED:true}
+  endpoint: ${KB_QDRANT_ENDPOINT:http://127.0.0.1:6333}
+  collection_name: ${KB_QDRANT_COLLECTION:kb_chunk}
+  embedding_model: ${KB_EMBEDDING_MODEL:mock-embedding-v1}
+  embedding_dim: ${KB_EMBEDDING_DIM:1024}
+  timeout_seconds: ${KB_QDRANT_TIMEOUT_SECONDS:10}

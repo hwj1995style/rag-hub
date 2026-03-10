@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:kbtest;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: never
+
+management:
+  endpoint:
+    health:
+      show-details: always
+
+kb:
+  search:
+    enabled: false
+  vector:
+    enabled: false
+  llm:
+    enabled: false
+  security:
+    jwt:
+      issuer: test-rag-hub
+      secret: test-rag-hub-secret-please-change
+      expiration-minutes: 30
+    bootstrap-admin:
+      enabled: false

@@ -1,0 +1,42 @@
+spring:
+  datasource:
+    url: jdbc:mysql://${KB_DB_HOST:mysql}:${KB_DB_PORT:3306}/${KB_DB_NAME:kb}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: ${KB_DB_USER:kb_user}
+    password: ${KB_DB_PASSWORD:change_me}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+        type.preferred_uuid_jdbc_type: CHAR
+
+kb:
+  search:
+    enabled: ${KB_ES_ENABLED:true}
+  vector:
+    enabled: ${KB_VECTOR_ENABLED:true}
+  llm:
+    enabled: ${KB_LLM_ENABLED:true}
+    fail-open: ${KB_LLM_FAIL_OPEN:false}
+    auth-header-name: ${KB_LLM_AUTH_HEADER_NAME:Authorization}
+    auth-header-prefix: ${KB_LLM_AUTH_HEADER_PREFIX:Bearer }
+    organization-header-name: ${KB_LLM_ORG_HEADER_NAME:}
+    organization-header-value: ${KB_LLM_ORG_HEADER_VALUE:}
+    workspace-header-name: ${KB_LLM_WORKSPACE_HEADER_NAME:}
+    workspace-header-value: ${KB_LLM_WORKSPACE_HEADER_VALUE:}
+    content-path: ${KB_LLM_CONTENT_PATH:choices[0].message.content}
+    error-code-path: ${KB_LLM_ERROR_CODE_PATH:error.code}
+    error-message-path: ${KB_LLM_ERROR_MESSAGE_PATH:error.message}
+  security:
+    jwt:
+      issuer: ${KB_JWT_ISSUER:rag-hub}
+      secret: ${KB_JWT_SECRET:change-this-secret-in-production}
+      expiration-minutes: ${KB_JWT_EXPIRATION_MINUTES:120}
+    bootstrap-admin:
+      enabled: ${KB_BOOTSTRAP_ADMIN_ENABLED:false}
+      username: ${KB_BOOTSTRAP_ADMIN_USERNAME:admin}
+      password: ${KB_BOOTSTRAP_ADMIN_PASSWORD:ChangeMe123!}
+      display-name: ${KB_BOOTSTRAP_ADMIN_DISPLAY_NAME:Bootstrap Admin}
+      role-code: ${KB_BOOTSTRAP_ADMIN_ROLE:admin}

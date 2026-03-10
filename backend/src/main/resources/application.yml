@@ -1,0 +1,83 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: rag-hub-backend
+  datasource:
+    url: jdbc:h2:mem:kb;MODE=MySQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
+
+kb:
+  storage:
+    endpoint: ${KB_MINIO_ENDPOINT:http://127.0.0.1:9000}
+    access-key: ${KB_MINIO_ACCESS_KEY:minioadmin}
+    secret-key: ${KB_MINIO_SECRET_KEY:minioadmin123}
+  search:
+    enabled: ${KB_ES_ENABLED:false}
+    es-uris: ${KB_ES_URIS:http://127.0.0.1:9200}
+    index-name: ${KB_ES_INDEX:kb_chunk}
+    timeout-seconds: 5
+    lexical-top-k: 10
+  vector:
+    enabled: ${KB_VECTOR_ENABLED:false}
+    vector-top-k: 10
+    embedding-model: ${KB_EMBEDDING_MODEL:mock-embedding-v1}
+    embedding-dim: ${KB_EMBEDDING_DIM:1024}
+    qdrant-host: ${KB_QDRANT_HOST:127.0.0.1}
+    qdrant-port: ${KB_QDRANT_PORT:6333}
+    qdrant-collection: ${KB_QDRANT_COLLECTION:kb_chunk}
+    timeout-seconds: ${KB_QDRANT_TIMEOUT_SECONDS:5}
+  llm:
+    enabled: ${KB_LLM_ENABLED:false}
+    fail-open: ${KB_LLM_FAIL_OPEN:true}
+    base-url: ${KB_LLM_BASE_URL:https://api.openai.com}
+    chat-path: ${KB_LLM_CHAT_PATH:/v1/chat/completions}
+    api-key: ${KB_LLM_API_KEY:}
+    model: ${KB_LLM_MODEL:gpt-4o-mini}
+    temperature: ${KB_LLM_TEMPERATURE:0.2}
+    timeout-seconds: ${KB_LLM_TIMEOUT_SECONDS:30}
+    system-prompt: ${KB_LLM_SYSTEM_PROMPT:你是企业知识库问答助手，请基于检索证据回答问题，无法确认时明确说明证据不足。}
+    auth-header-name: ${KB_LLM_AUTH_HEADER_NAME:Authorization}
+    auth-header-prefix: ${KB_LLM_AUTH_HEADER_PREFIX:Bearer }
+    organization-header-name: ${KB_LLM_ORG_HEADER_NAME:}
+    organization-header-value: ${KB_LLM_ORG_HEADER_VALUE:}
+    workspace-header-name: ${KB_LLM_WORKSPACE_HEADER_NAME:}
+    workspace-header-value: ${KB_LLM_WORKSPACE_HEADER_VALUE:}
+    content-path: ${KB_LLM_CONTENT_PATH:choices[0].message.content}
+    error-code-path: ${KB_LLM_ERROR_CODE_PATH:error.code}
+    error-message-path: ${KB_LLM_ERROR_MESSAGE_PATH:error.message}
+    extra-headers: {}
+  security:
+    jwt:
+      issuer: ${KB_JWT_ISSUER:rag-hub}
+      secret: ${KB_JWT_SECRET:rag-hub-dev-secret-change-before-production}
+      expiration-minutes: ${KB_JWT_EXPIRATION_MINUTES:120}
+    bootstrap-admin:
+      enabled: ${KB_BOOTSTRAP_ADMIN_ENABLED:true}
+      username: ${KB_BOOTSTRAP_ADMIN_USERNAME:admin}
+      password: ${KB_BOOTSTRAP_ADMIN_PASSWORD:ChangeMe123!}
+      display-name: ${KB_BOOTSTRAP_ADMIN_DISPLAY_NAME:Local Admin}
+      role-code: ${KB_BOOTSTRAP_ADMIN_ROLE:admin}

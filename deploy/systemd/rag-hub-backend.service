@@ -1,0 +1,21 @@
+[Unit]
+Description=rag-hub Backend 服务
+After=network.target mysql.service redis.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=kbapp
+Group=kbapp
+WorkingDirectory=/app/kb/backend
+EnvironmentFile=/app/kb/config/kb.env
+ExecStart=/usr/bin/java -jar /app/kb/backend/rag-hub-backend.jar --spring.profiles.active=prod
+SuccessExitStatus=143
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+StandardOutput=append:/app/kb/logs/rag-hub-backend.out.log
+StandardError=append:/app/kb/logs/rag-hub-backend.err.log
+
+[Install]
+WantedBy=multi-user.target

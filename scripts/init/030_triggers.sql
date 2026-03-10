@@ -1,0 +1,2 @@
+-- MySQL tables already use CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP.
+-- Reserved for future trigger-based auditing.

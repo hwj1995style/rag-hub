@@ -1,0 +1,20 @@
+[Unit]
+Description=rag-hub Parser Worker 服务
+After=network.target mysql.service redis.service
+Wants=network.target
+
+[Service]
+Type=simple
+User=kbapp
+Group=kbapp
+WorkingDirectory=/app/kb/parser-worker
+EnvironmentFile=/app/kb/config/kb.env
+ExecStart=/app/kb/parser-worker/.venv/bin/python worker.py
+Restart=always
+RestartSec=5
+LimitNOFILE=65535
+StandardOutput=append:/app/kb/logs/rag-hub-parser-worker.out.log
+StandardError=append:/app/kb/logs/rag-hub-parser-worker.err.log
+
+[Install]
+WantedBy=multi-user.target

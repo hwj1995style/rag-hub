@@ -1,0 +1,12 @@
+{
+  "vectors": {
+    "size": 1024,
+    "distance": "Cosine"
+  },
+  "optimizers_config": {
+    "default_segment_number": 2
+  },
+  "replication_factor": 1,
+  "write_consistency_factor": 1,
+  "on_disk_payload": true
+}

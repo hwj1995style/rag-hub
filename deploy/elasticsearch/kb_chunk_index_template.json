@@ -1,0 +1,35 @@
+{
+  "index_patterns": ["kb_chunk*"],
+  "template": {
+    "settings": {
+      "number_of_shards": 1,
+      "number_of_replicas": 0,
+      "analysis": {
+        "analyzer": {
+          "kb_text_analyzer": {
+            "type": "standard"
+          }
+        }
+      }
+    },
+    "mappings": {
+      "properties": {
+        "chunk_id": { "type": "keyword" },
+        "document_id": { "type": "keyword" },
+        "version_id": { "type": "keyword" },
+        "chunk_no": { "type": "integer" },
+        "chunk_type": { "type": "keyword" },
+        "title_path": { "type": "text", "analyzer": "kb_text_analyzer" },
+        "page_no": { "type": "integer" },
+        "locator": { "type": "keyword" },
+        "content_text": { "type": "text", "analyzer": "kb_text_analyzer" },
+        "content_summary": { "type": "text", "analyzer": "kb_text_analyzer" }
+      }
+    }
+  },
+  "priority": 100,
+  "version": 1,
+  "_meta": {
+    "description": "Template for knowledge base chunk index"
+  }
+}
