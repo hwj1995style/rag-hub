@@ -1,62 +1,65 @@
-# rag-hub ????
+# rag-hub Development Guide
 
-## 1. ????
+## Goal
 
-????????? `rag-hub` ???????????
+This guide explains how the current `rag-hub` project is intended to evolve in development.
 
-- ????
-- ????
-- ??????
-- ??????
-- ????
-- ????
-- ??????
+Related docs:
 
-?????
+- `docs/knowledge-base-implementation-plan.md`
+- `docs/frontend-architecture.md`
+- `docs/frontend-development-guide.md`
+- `docs/knowledge-base-authentication.md`
+- `docs/knowledge-base-api-spec.md`
+- `docs/knowledge-base-deployment-docker.md`
 
-- [????](D:/Projects/rag-hub/docs/knowledge-base-implementation-plan.md)
-- [????](D:/Projects/rag-hub/docs/knowledge-base-authentication.md)
-- [Host Linux ??](D:/Projects/rag-hub/docs/knowledge-base-deployment-host-linux.md)
-- [Docker ??](D:/Projects/rag-hub/docs/knowledge-base-deployment-docker.md)
-- [????](D:/Projects/rag-hub/docs/knowledge-base-api-spec.md)
-- [DDL ????](D:/Projects/rag-hub/docs/knowledge-base-ddl-and-init.md)
-- [????](D:/Projects/rag-hub/docs/knowledge-base-test-cases.md)
+## Phase-1 Scope
 
-## 2. ????
+Phase 1 focuses on a document-centric knowledge hub with:
 
-????????????????
+- PDF, Word, Excel, PPT, and Markdown ingestion
+- parsing and chunking
+- metadata storage in MySQL
+- full-text search in Elasticsearch
+- vector search in Qdrant
+- retrieval-augmented QA with citations
+- version management and basic permissions
 
-- ?????PDF?Word?Excel?PPT?Markdown
-- ???????????????????????????????
-- ?????MySQL 8.0 + Elasticsearch + Qdrant + MinIO
+## Current Service Split
 
-## 3. ??????
+### backend
 
-?????????????????
+Responsible for:
 
-- ?????`POST /api/auth/login`
-- ?????Bearer JWT
-- ????????????
-- ??????? `admin` ??
-- ???????????????
+- document APIs
+- search APIs
+- QA APIs
+- task and query-log APIs
+- login, JWT, and basic role checks
 
-???????????`docs/knowledge-base-authentication.md`
+### parser-worker
 
-## 4. ??????
+Responsible for:
 
-```mermaid
-flowchart LR
-    S1["????"] --> A1["???? ingest-service"]
-    A1 --> B1["???? / ??"]
-    B1 --> C1["???? parser-worker"]
-    C1 --> D1["???? MySQL"]
-    C1 --> E1["???? MinIO"]
-    C1 --> F1["???? Elasticsearch"]
-    C1 --> G1["???? Qdrant"]
-    U1["?? / ????"] --> H1["?????? retrieval-service"]
-    H1 --> D1
-    H1 --> F1
-    H1 --> G1
-    H1 --> I1["????? / LLM"]
-    O1["???? admin-console"] --> D1
-```
+- claiming ingest tasks
+- parsing files and generating chunks
+- writing to MySQL, Elasticsearch, and Qdrant
+- updating parse and index status
+
+### frontend
+
+Planned as a separate web project for:
+
+- login
+- document management UI
+- search and QA workbench
+- permissions UI
+- task and log views
+
+## Recommended Development Order
+
+1. keep backend API and auth stable
+2. initialize the separate `frontend/` project
+3. implement login, documents, search, and QA flows
+4. add permissions, tasks, and query-log views
+5. integrate frontend build output into the Nginx deployment path
