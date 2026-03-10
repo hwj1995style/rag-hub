@@ -1,65 +1,53 @@
-# Frontend Architecture for rag-hub
+# rag-hub 前端总体设计方案
 
-## Goal
+## 1. 文档目标
 
-This document defines the frontend architecture for `rag-hub` in a fully separated frontend-backend model.
+本文档用于定义 `rag-hub` 在前后端分离模式下的前端总体设计，确保前端实现与现有总体方案、后端 API 和部署方式保持一致。
 
-It covers:
+## 2. 前端在系统中的定位
 
-- frontend responsibilities
-- system boundaries
-- page information architecture
-- technology choices
-- auth integration
-- state management
-- deployment and local integration strategy
+后端目前已承担：
 
-## Frontend Role in the System
+- 文档接入、版本管理、任务 API
+- 混合检索与 QA 编排
+- 权限绑定 API
+- JWT 登录认证与角色校验
 
-The backend already owns:
+因此前端应作为独立 Web 应用，负责：
 
-- document ingestion and version APIs
-- hybrid retrieval and QA orchestration
-- permission binding APIs
-- JWT login and role checks
+- 登录
+- 文档管理界面
+- 检索与问答工作台
+- 权限编辑页
+- 任务与日志可视化
 
-So the frontend should be a separate web app responsible for:
+这个前端本质上对应总体方案中的 `admin-console`。
 
-- login
-- document management UI
-- retrieval and QA workbench
-- permission editing UI
-- task and log visualization
+## 3. 职责边界
 
-The frontend maps most closely to the `admin-console` role in the overall implementation plan.
+### 前端负责
 
-## Boundaries
+- 路由与页面渲染
+- 登录态保存
+- API 调用和错误反馈
+- 表格、表单、上传、检索结果、问答结果展示
+- 基于 `roleCode` 的 UI 可见性控制
 
-### Frontend owns
+### 后端负责
 
-- routing and page rendering
-- login state persistence
-- API calls and error display
-- tables, forms, uploads, result rendering
-- role-based UI visibility control
+- 所有业务 API
+- JWT 签发与校验
+- admin 写接口鉴权
+- 检索、问答、持久化、日志
 
-### Backend owns
+### 前端暂不负责
 
-- all business APIs
-- JWT issuance and validation
-- admin write authorization
-- persistence, retrieval, QA, and logs
+- 资源级权限过滤
+- parser 执行
+- retrieval 编排
+- refresh token 逻辑
 
-### Frontend should not own yet
-
-- resource-level permission enforcement
-- parser execution
-- retrieval orchestration
-- refresh token logic
-
-## Recommended Stack
-
-Use:
+## 4. 推荐技术栈
 
 - React
 - TypeScript
@@ -69,9 +57,9 @@ Use:
 - Zustand
 - Ant Design
 
-This is the most practical stack for a single developer building a management console against the current API set.
+这是当前阶段最务实、最适合管理后台的选择。
 
-## Suggested Routes
+## 5. 推荐路由
 
 - `/login`
 - `/documents`
@@ -83,7 +71,7 @@ This is the most practical stack for a single developer building a management co
 - `/tasks/:taskId`
 - `/query-logs/:logId`
 
-## Suggested Project Structure
+## 6. 工程结构建议
 
 ```text
 frontend/
@@ -102,9 +90,9 @@ frontend/
     styles/
 ```
 
-## Auth Integration
+## 7. 认证集成
 
-Store at least:
+建议保存：
 
 - `accessToken`
 - `tokenType`
@@ -114,24 +102,24 @@ Store at least:
 - `displayName`
 - `roleCode`
 
-Recommended behavior:
+建议行为：
 
-- use `localStorage` for token persistence
-- guard all business routes
-- on `401`, clear token and redirect to `/login`
-- on `403`, show a permission error
-- hide admin-only actions for non-admin users
+- 使用 `localStorage` 保存 token
+- 为业务路由设置 guard
+- `401` 时清空 token 并跳转 `/login`
+- `403` 时显示无权限提示
+- 非 admin 用户隐藏 admin 操作
 
-## API Integration
+## 8. API 集成
 
-Create a shared `httpClient` that:
+建议封装统一 `httpClient`，负责：
 
-- uses `/api` as base path
-- injects the Bearer token
-- parses `code`, `message`, `traceId`, and `data`
-- handles `401` and `403` consistently
+- 使用 `/api` 作为 base path
+- 注入 Bearer token
+- 统一解析 `code/message/traceId/data`
+- 统一处理 `401` / `403`
 
-Recommended API modules:
+建议拆分 API 模块：
 
 - `auth.ts`
 - `documents.ts`
@@ -141,41 +129,41 @@ Recommended API modules:
 - `tasks.ts`
 - `queryLogs.ts`
 
-## State Strategy
+## 9. 状态策略
 
-Use TanStack Query for server state:
+使用 TanStack Query 管理服务端状态：
 
-- lists
-- details
-- search results
-- QA results
-- task details
+- 列表
+- 详情
+- 搜索结果
+- QA 结果
+- 任务详情
 
-Use Zustand for local app state:
+使用 Zustand 管理客户端状态：
 
 - auth state
 - token
-- layout state
-- lightweight page UI state
+- 布局状态
+- 页面级轻量 UI 状态
 
-## Local Integration
+## 10. 本地联调
 
-Recommended ports:
+推荐端口：
 
-- frontend: `5173`
-- backend: `8080`
+- frontend：`5173`
+- backend：`8080`
 
-Use Vite proxy:
+Vite proxy：
 
 - `/api` -> `http://127.0.0.1:8080`
 - `/actuator` -> `http://127.0.0.1:8080`
 
-## Deployment Model
+## 11. 部署方式
 
-Recommended production model:
+推荐生产模式：
 
-- build frontend as static assets
-- serve frontend through Nginx
-- reverse proxy `/api` to `rag-hub-backend`
+- 前端构建为静态资源
+- 由 Nginx 托管前端
+- `/api` 反向代理到 `rag-hub-backend`
 
-This keeps frontend and backend physically separated while preserving same-origin browser access.
+这种方式能同时满足前后端分离与浏览器同源访问。

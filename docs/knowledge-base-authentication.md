@@ -1,27 +1,27 @@
-# rag-hub Authentication and Authorization
+# rag-hub 认证与鉴权说明
 
-## Scope
+## 1. 当前实现范围
 
-The backend currently provides a minimal but usable auth layer with:
+当前后端已实现一版最小可用的认证鉴权能力，包括：
 
-- Spring Security integration
-- username/password login
-- Bearer JWT issuance and validation
-- global authentication enforcement
-- role-based protection for admin write APIs
+- Spring Security 接入
+- 用户名密码登录
+- Bearer JWT 签发与校验
+- 全局未登录拦截
+- 管理写接口的 `admin` 角色鉴权
 
-Not implemented yet:
+当前还未实现：
 
-- resource-level filtering for document reads, search, and QA
+- 资源级权限策略对文档读取、搜索、问答结果的过滤
 - refresh token
-- logout blacklist
-- multi-session management
+- 登出黑名单
+- 多端会话管理
 
-## Login API
+## 2. 登录接口
 
-Endpoint: `POST /api/auth/login`
+接口：`POST /api/auth/login`
 
-Request:
+请求体：
 
 ```json
 {
@@ -30,7 +30,7 @@ Request:
 }
 ```
 
-Successful `data` payload:
+成功响应中的 `data` 结构：
 
 ```json
 {
@@ -46,26 +46,32 @@ Successful `data` payload:
 }
 ```
 
-## Token Usage
+失败响应：
 
-Send the token in the request header:
+- 缺少必要参数：`400 / KB-40001`
+- 用户名或密码错误：`401 / KB-40102`
+- 账号状态非 `active`：`401 / KB-40102`
+
+## 3. Token 使用方式
+
+业务接口需要在请求头中传递：
 
 ```http
 Authorization: Bearer <jwt>
 ```
 
-Public endpoints:
+当前公开接口：
 
 - `POST /api/auth/login`
 - `GET /actuator/health`
 - `GET /actuator/info`
-- `/h2-console/**` for local development only
+- `/h2-console/**` 仅用于本地开发调试
 
-All other `/api/**` endpoints require authentication.
+其余 `/api/**` 默认都要求认证。
 
-## Current Role Rules
+## 4. 角色鉴权范围
 
-Admin-only endpoints:
+已接入 `admin` 角色限制的接口：
 
 - `POST /api/documents/upload`
 - `POST /api/documents/batch-import`
@@ -73,7 +79,7 @@ Admin-only endpoints:
 - `POST /api/documents/{documentId}/versions/{versionId}/activate`
 - `POST /api/permissions/bind`
 
-Authenticated-user endpoints:
+当前仅要求登录、不区分角色的接口：
 
 - `GET /api/documents`
 - `GET /api/documents/{documentId}`
@@ -82,23 +88,3 @@ Authenticated-user endpoints:
 - `POST /api/search/query`
 - `POST /api/qa/query`
 - `GET /api/query-logs/{logId}`
-
-## Config Keys
-
-Prefix: `kb.security`
-
-JWT config:
-
-- `kb.security.jwt.issuer`
-- `kb.security.jwt.secret`
-- `kb.security.jwt.expiration-minutes`
-
-Bootstrap admin config:
-
-- `kb.security.bootstrap-admin.enabled`
-- `kb.security.bootstrap-admin.username`
-- `kb.security.bootstrap-admin.password`
-- `kb.security.bootstrap-admin.display-name`
-- `kb.security.bootstrap-admin.role-code`
-
-The local default profile enables bootstrap admin. The `prod` and `docker` profiles disable it by default.

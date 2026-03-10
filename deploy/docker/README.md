@@ -1,24 +1,22 @@
-# Docker Deployment Notes
+# Docker 部署说明
 
-## Purpose
+## 1. 作用
 
-This directory contains the cross-platform Docker deployment files for `rag-hub`.
-
-Supported environments:
+本目录保存 `rag-hub` 的跨平台 Docker 部署文件，适用于：
 
 - Linux Docker Engine
 - macOS Docker Desktop
 - Windows Docker Desktop
 
-## Files
+## 2. 文件清单
 
 - `docker-compose.yml`
 - `.env.example`
 - `nginx.conf`
 
-## Services
+## 3. 组件清单
 
-The current compose stack includes:
+当前 compose 栈包含：
 
 - MySQL
 - Redis
@@ -29,47 +27,47 @@ The current compose stack includes:
 - rag-hub-parser-worker
 - nginx
 
-## Quick Start
+## 4. 快速使用
 
-### Prepare env file
+### 4.1 准备环境文件
 
 ```bash
 cp deploy/docker/.env.example deploy/docker/.env
 ```
 
-Adjust ports, passwords, and feature flags as needed. The default host MySQL port is `13306`.
+按需修改端口、密码和开关配置。默认 MySQL 宿主机端口为 `13306`。
 
-### Prepare backend artifact
+### 4.2 准备 backend 包
 
-Compose expects:
+compose 默认需要：
 
 - `backend/target/rag-hub-backend-0.0.1-SNAPSHOT.jar`
 
-### Start services
+### 4.3 启动容器
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
 ```
 
-### Check status
+### 4.4 查看状态
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
 ```
 
-### Stop services
+### 4.5 停止容器
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
 ```
 
-## Auth Variables
+## 5. 认证相关变量
 
-Recommended variables:
+建议至少配置：
 
 - `KB_JWT_ISSUER`
 - `KB_JWT_SECRET`
 - `KB_JWT_EXPIRATION_MINUTES`
 - `KB_BOOTSTRAP_ADMIN_ENABLED`
 
-Docker defaults to `KB_BOOTSTRAP_ADMIN_ENABLED=false`. For long-running environments, prefer a pre-created admin account over bootstrap admin.
+默认 Docker 配置中 `KB_BOOTSTRAP_ADMIN_ENABLED=false`，生产和联调环境应优先使用预置管理员账号，而不是长期依赖 bootstrap admin。

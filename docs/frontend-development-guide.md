@@ -1,35 +1,31 @@
-# Frontend Development Guide for rag-hub
+# rag-hub 前端开发文档
 
-## Goal
+## 1. 文档目标
 
-This guide breaks the frontend implementation into practical phases so it can be delivered incrementally and validated against the current backend.
+本文档将前端实现拆成可落地的开发阶段，便于逐步交付并与现有后端能力对齐。
 
-## Phase 1 Goal
+## 2. 第一阶段目标
 
-The first frontend delivery should make the system usable for login, document browsing, search, and QA.
+首批交付目标是形成可用的管理后台，至少满足：
 
-Minimum goals:
+- 能登录
+- 能查看文档列表和详情
+- 能查看 chunk
+- 能执行搜索
+- 能执行问答
+- admin 可见并可调用管理写接口
 
-- login works
-- document list and detail work
-- chunk view works
-- search works
-- QA works
-- admin-only operations are visible only to admin users
+## 3. 工程初始化
 
-## Project Initialization
+建议新增目录：`frontend/`
 
-Create a new project under:
-
-- `frontend/`
-
-Suggested bootstrap command:
+推荐初始化命令：
 
 ```bash
 npm create vite@latest frontend -- --template react-ts
 ```
 
-Recommended dependencies:
+建议核心依赖：
 
 ```bash
 react-router-dom
@@ -40,111 +36,110 @@ antd
 @ant-design/icons
 ```
 
-## Suggested Development Phases
+## 4. 分阶段开发计划
 
-### Phase 1: Project Skeleton
+### 阶段 1：工程骨架
 
-Build:
+完成：
 
-- Vite + React + TypeScript app
+- Vite + React + TypeScript 初始化
 - router
 - query provider
-- Ant Design setup
-- base layout
+- Ant Design 接入
+- 基础布局
 - `httpClient`
-- local env and proxy config
+- local env 和 proxy 配置
 
-### Phase 2: Authentication Flow
+### 阶段 2：认证链路
 
-Build:
+完成：
 
-- login page
-- `/api/auth/login` integration
-- token persistence
+- 登录页
+- `/api/auth/login` 集成
+- token 持久化
 - route guard
 - logout
-- automatic `401` handling
+- `401` 自动处理
 
-### Phase 3: Document Center
+### 阶段 3：文档中心
 
-Build:
+完成：
 
-- document list page
-- document detail page
-- chunk view page or drawer
+- 文档列表页
+- 文档详情页
+- chunk 查看
 
-Integrate first:
+优先接入：
 
 - `GET /api/documents`
 - `GET /api/documents/{documentId}`
 - `GET /api/documents/{documentId}/chunks`
 
-Then add admin actions:
+其后再接入 admin 动作：
 
 - upload
 - batch import
 - reparse
 - activate version
 
-### Phase 4: Search Workbench
+### 阶段 4：检索工作台
 
-Build:
+完成：
 
-- query input area
-- optional filters
-- result list with title, locator, score, and snippet
+- 查询输入区
+- 可选 filters
+- 结果列表
+- 显示文档标题、定位、分数、摘要
 
-Integrate:
+接口：`POST /api/search/query`
 
-- `POST /api/search/query`
+### 阶段 5：QA 工作台
 
-### Phase 5: QA Workbench
+完成：
 
-Build:
+- 问题输入
+- 答案展示
+- citations 展示
+- topK / sessionId 控制
+- query log 跳转
 
-- question input
-- answer panel
-- citations panel
-- optional topK and sessionId controls
-- query-log detail link
-
-Integrate:
+接口：
 
 - `POST /api/qa/query`
 - `GET /api/query-logs/{logId}`
 
-### Phase 6: Permissions and Tasks
+### 阶段 6：权限与任务
 
-Build:
+完成：
 
-- permission binding page
-- task detail page
+- 权限绑定页
+- 任务详情页
 
-Integrate:
+接口：
 
 - `POST /api/permissions/bind`
 - `GET /api/tasks/{taskId}`
 
-## Recommended Build Order
+## 5. 推荐开发顺序
 
-1. login page
-2. main layout
-3. document list
-4. document detail
-5. chunk view
-6. search page
-7. QA page
-8. permissions page
-9. task page
+1. 登录页
+2. 主布局
+3. 文档列表
+4. 文档详情
+5. chunk 查看
+6. 搜索页
+7. QA 页
+8. 权限页
+9. 任务页
 
-## API Handling Rules
+## 6. API 处理规则
 
-- do not call `axios` directly inside pages
-- centralize response parsing
-- treat non-`KB-00000` as business errors
-- inject Bearer token automatically
+- 页面不直接调用 axios
+- 统一解析 `code/message/traceId/data`
+- 非 `KB-00000` 视为业务错误
+- 自动注入 Bearer token
 
-Recommended query keys:
+建议 query key：
 
 - `['documents', filters]`
 - `['document', documentId]`
@@ -154,44 +149,47 @@ Recommended query keys:
 - `['task', taskId]`
 - `['queryLog', logId]`
 
-## Local Integration Plan
+## 7. 本地联调建议
 
-Recommended local ports:
+推荐端口：
 
-- frontend: `5173`
-- backend: `8080`
+- frontend：`5173`
+- backend：`8080`
 
-Recommended Vite proxy:
+Vite proxy：
 
 - `/api` -> backend
 - `/actuator` -> backend
 
-Suggested integration order:
+联调顺序：
 
-1. login
-2. document list
-3. document detail and chunks
-4. search
+1. 登录
+2. 文档列表
+3. 文档详情与 chunks
+4. 搜索
 5. QA
-6. admin write APIs
+6. admin 写接口
 
-## Acceptance Checklist
+## 8. 验收清单
 
-- login success and failure both behave correctly
-- refresh preserves login state
-- `401` redirects to login
-- `403` shows a permission message
-- documents can be listed and opened
-- chunks can be viewed
-- search results render correctly
-- QA answers and citations render correctly
-- admin and non-admin users see different action buttons
+- 登录成功与失败反馈正常
+- 刷新后登录态保持
+- `401` 跳回登录页
+- `403` 有无权限提示
+- 文档列表、详情、chunk 可正常查看
+- 搜索结果可展示
+- QA 答案与引用可展示
+- admin 与非 admin 按钮可见性有区别
 
-## Known Limits
+## 9. 当前限制
 
-At the moment, the backend does not enforce resource-level policies on search, QA, or document reads. The frontend must not assume those rules are already active.
+目前后端还未完成资源级权限过滤，因此前端不应假设：
 
-The frontend can only provide:
+- 文档一定会按策略隐藏
+- 搜索结果一定会按资源策略过滤
+- QA 引用一定已经按资源权限裁剪
 
-- login-state control
-- role-based UI visibility control
+目前前端可做的仅是：
+
+- 登录态控制
+- 基于 `roleCode` 的 UI 可见性控制

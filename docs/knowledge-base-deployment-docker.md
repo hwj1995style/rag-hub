@@ -1,50 +1,50 @@
-# rag-hub Docker Deployment
+# rag-hub Docker 部署文档
 
-## Scope
+## 1. 适用范围
 
-This guide covers Docker and Docker Compose deployment for `rag-hub` on:
+本文档用于通过 Docker / Docker Compose 部署 `rag-hub`，适用于：
 
 - Linux Docker Engine
 - Windows Docker Desktop
 - macOS Docker Desktop
 
-## Quick Start
+## 2. 首次部署最短路径
 
-### Prepare env file
+### 2.1 准备环境文件
 
 ```bash
 cp deploy/docker/.env.example deploy/docker/.env
 ```
 
-The default host MySQL port mapping is `13306 -> 3306` to avoid host-side conflicts.
+默认宿主机 MySQL 端口是 `13306 -> 3306`，用于避免部分环境下 `3306` 被占用或被限制。
 
-### Prepare backend artifact
+### 2.2 准备 backend 包
 
-Required file:
+需要文件：
 
 - `backend/target/rag-hub-backend-0.0.1-SNAPSHOT.jar`
 
-### Start services
+### 2.3 启动容器
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
 ```
 
-### Check status
+### 2.4 查看状态
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
 ```
 
-### Stop services
+### 2.5 停止容器
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
 ```
 
-## Auth Settings
+## 3. 认证配置
 
-Recommended environment variables:
+建议显式配置：
 
 ```env
 KB_JWT_ISSUER=rag-hub
@@ -53,11 +53,11 @@ KB_JWT_EXPIRATION_MINUTES=120
 KB_BOOTSTRAP_ADMIN_ENABLED=false
 ```
 
-If you need a one-time bootstrap admin, enable it temporarily and disable it again after initialization.
+如需首次初始化管理员，可以临时开启 bootstrap admin，待初始化完成后再关闭。
 
-## Startup Ordering
+## 4. 启动顺序
 
-Compose already enforces this dependency chain:
+Compose 已内置健康检查依赖链：
 
 - `mysql healthy -> rag-hub-backend`
 - `mysql healthy -> rag-hub-parser-worker`

@@ -1,10 +1,10 @@
-# rag-hub Development Guide
+# rag-hub 开发指南
 
-## Goal
+## 1. 文档目标
 
-This guide explains how the current `rag-hub` project is intended to evolve in development.
+本文档用于指导 `rag-hub` 的日常研发与落地推进。
 
-Related docs:
+关联文档：
 
 - `docs/knowledge-base-implementation-plan.md`
 - `docs/frontend-architecture.md`
@@ -13,53 +13,53 @@ Related docs:
 - `docs/knowledge-base-api-spec.md`
 - `docs/knowledge-base-deployment-docker.md`
 
-## Phase-1 Scope
+## 2. 一期范围
 
-Phase 1 focuses on a document-centric knowledge hub with:
+一期聚焦文档型知识库，覆盖：
 
-- PDF, Word, Excel, PPT, and Markdown ingestion
-- parsing and chunking
-- metadata storage in MySQL
-- full-text search in Elasticsearch
-- vector search in Qdrant
-- retrieval-augmented QA with citations
-- version management and basic permissions
+- PDF、Word、Excel、PPT、Markdown 接入
+- 解析、分块、索引
+- MySQL 元数据存储
+- Elasticsearch 全文检索
+- Qdrant 向量检索
+- 引用式问答
+- 版本管理和基础权限
 
-## Current Service Split
+## 3. 服务分层
 
 ### backend
 
-Responsible for:
+负责：
 
-- document APIs
-- search APIs
-- QA APIs
-- task and query-log APIs
-- login, JWT, and basic role checks
+- 文档 API
+- 检索 API
+- 问答 API
+- 任务和 query log API
+- 登录、JWT 与基础角色鉴权
 
 ### parser-worker
 
-Responsible for:
+负责：
 
-- claiming ingest tasks
-- parsing files and generating chunks
-- writing to MySQL, Elasticsearch, and Qdrant
-- updating parse and index status
+- 认领 ingest 任务
+- 解析文件并生成 chunk
+- 写入 MySQL、Elasticsearch、Qdrant
+- 回写 parse/index 状态
 
 ### frontend
 
-Planned as a separate web project for:
+规划为独立 Web 工程，负责：
 
-- login
-- document management UI
-- search and QA workbench
-- permissions UI
-- task and log views
+- 登录
+- 文档管理 UI
+- 检索与问答工作台
+- 权限管理页
+- 任务与日志查看
 
-## Recommended Development Order
+## 4. 建议开发顺序
 
-1. keep backend API and auth stable
-2. initialize the separate `frontend/` project
-3. implement login, documents, search, and QA flows
-4. add permissions, tasks, and query-log views
-5. integrate frontend build output into the Nginx deployment path
+1. 保持 backend API 和认证能力稳定
+2. 初始化 `frontend/` 独立工程
+3. 打通登录、文档、检索、问答主链路
+4. 补充权限绑定、任务查看和 query log 页
+5. 完成前端打包与 Nginx 集成部署

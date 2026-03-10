@@ -1,57 +1,57 @@
 # rag-hub
 
-`rag-hub` is a knowledge hub platform for document ingestion, hybrid retrieval, and citation-based LLM question answering.
+`rag-hub` 是一个面向文档接入、混合检索和大模型问答的知识库平台。
 
-## Entry Points
+## 主要入口
 
-### Development Docs
+### 开发文档
 
-- Development guide: `docs/knowledge-base-development-guide.md`
-- Frontend architecture: `docs/frontend-architecture.md`
-- Frontend development guide: `docs/frontend-development-guide.md`
-- Authentication guide: `docs/knowledge-base-authentication.md`
-- API spec: `docs/knowledge-base-api-spec.md`
-- Implementation plan: `docs/knowledge-base-implementation-plan.md`
-- DDL and init: `docs/knowledge-base-ddl-and-init.md`
-- Test cases: `docs/knowledge-base-test-cases.md`
+- 开发指南：`docs/knowledge-base-development-guide.md`
+- 前端总体设计：`docs/frontend-architecture.md`
+- 前端开发文档：`docs/frontend-development-guide.md`
+- 认证说明：`docs/knowledge-base-authentication.md`
+- API 规范：`docs/knowledge-base-api-spec.md`
+- 实施方案：`docs/knowledge-base-implementation-plan.md`
+- DDL 与初始化：`docs/knowledge-base-ddl-and-init.md`
+- 测试案例：`docs/knowledge-base-test-cases.md`
 
-### Local Development
+### 本地开发与联调
 
-- Backend notes: `backend/README.md`
-- Parser worker notes: `parser-worker/README.md`
-- One-click local verification: `scripts/verify_local_stack.ps1`
+- backend 说明：`backend/README.md`
+- parser-worker 说明：`parser-worker/README.md`
+- 本地一键验收：`scripts/verify_local_stack.ps1`
 
-### Deployment Docs
+### 部署文档
 
-- Docker deployment: `docs/knowledge-base-deployment-docker.md`
-- Host Linux deployment: `docs/knowledge-base-deployment-host-linux.md`
-- Ops handbook: `docs/knowledge-base-ops-handbook.md`
-- Docker directory notes: `deploy/docker/README.md`
+- Docker 部署：`docs/knowledge-base-deployment-docker.md`
+- Host Linux 部署：`docs/knowledge-base-deployment-host-linux.md`
+- 运维手册：`docs/knowledge-base-ops-handbook.md`
+- Docker 目录说明：`deploy/docker/README.md`
 
-## Current Authentication Status
+## 当前认证状态
 
-The backend already supports a minimal but usable authentication and authorization flow:
+后端已实现一版最小可用的认证鉴权能力：
 
-- `POST /api/auth/login` issues a Bearer JWT
-- All business APIs require authentication except `/api/auth/login`, `/actuator/health`, and `/actuator/info`
-- Admin write operations require the `admin` role
-- Resource-level policy storage exists, but resource-level filtering is not wired into search, QA, or document reads yet
+- `POST /api/auth/login` 登录换取 Bearer JWT
+- 除 `/api/auth/login`、`/actuator/health`、`/actuator/info` 外，其余接口默认要求认证
+- 文档上传、批量导入、重解析、版本激活、权限绑定等管理写接口要求 `admin` 角色
+- 资源级权限策略已保留数据模型与管理接口，但尚未接入搜索、问答和文档读取链路
 
-See `docs/knowledge-base-authentication.md` for details.
+详细说明见：`docs/knowledge-base-authentication.md`
 
-## Deployment Options
+## 部署方式
 
-Two independent deployment paths are currently supported:
+当前保留两条独立部署路径：
 
-- Host Linux: `systemd + host Nginx + host deployment scripts`
-- Docker: cross-platform `docker compose`
+- Host Linux：`systemd + 主机 Nginx + 主机发布脚本`
+- Docker：跨平台 `docker compose`
 
-## Key Directories
+## 关键目录
 
-- `backend/`: Spring Boot backend service
-- `parser-worker/`: Python parser and indexing worker
-- `scripts/`: local development, integration, and verification scripts
-- `deploy/linux/`: Host Linux deployment scripts
-- `deploy/systemd/`: systemd service files
-- `deploy/docker/`: Docker deployment files
-- `docs/`: architecture, development, deployment, and ops docs
+- `backend/`：Spring Boot 后端服务
+- `parser-worker/`：Python 解析与索引 worker
+- `scripts/`：本地开发、联调、验收脚本
+- `deploy/linux/`：Host Linux 部署脚本
+- `deploy/systemd/`：systemd 服务配置
+- `deploy/docker/`：Docker 部署文件
+- `docs/`：架构、开发、部署、运维文档
