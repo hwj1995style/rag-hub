@@ -2,7 +2,7 @@
 
 ## 1. 文档目标
 
-本文档用于指导 `frontend/` 工程的迭代开发，并约束前后端分离后的本地联调方式、页面优先级和交付边界。
+本文档用于指导 `frontend/` 工程的迭代开发，并约束前后端分离后的联调方式、页面优先级和交付边界。
 
 ## 2. 当前实现范围
 
@@ -72,48 +72,48 @@ frontend/
 - 任务详情页
 - Query Log 详情页
 
-### 阶段 4：本地联调收敛
+### 阶段 4：联调收敛
 完成内容：
-- 宿主机模式联调
-- Docker 后端模式联调
+- Docker 后端联调
+- Host Linux 已部署后端联调
 - 上传、重解析、版本激活、权限绑定等 admin 写接口验证
-- 状态检查与联调重置脚本
+- Docker Nginx 统一入口验证
 
-## 5. 本地联调模式
+## 5. 联调模式
 
-### 模式一：宿主机联调
+### 模式一：前端本机开发 + Docker 后端
 适用场景：
-- 开发前端页面
-- 联调宿主机 Spring Boot 后端
-- 使用内存 H2 seed 数据快速回归
+- 日常前端开发
+- 验证 MySQL、Redis、MinIO、Elasticsearch、Qdrant、parser-worker 等容器依赖
+- 验证 Docker backend 的认证、健康检查和任务闭环
 
 默认地址：
 - 前端：`http://127.0.0.1:5173`
-- 后端：`http://127.0.0.1:8080`
+- Docker backend：`http://127.0.0.1:18080`
+- Docker Nginx：`http://127.0.0.1`
 
 常用命令：
-- 启动：`powershell -ExecutionPolicy Bypass -File scripts/run_all_local.ps1 -StartFrontend -SkipWorker -SeedTestData -SkipEnvCheck`
-- 状态：`powershell -ExecutionPolicy Bypass -File scripts/status_local.ps1 -CheckHealth`
-- 验证：`powershell -ExecutionPolicy Bypass -File scripts/verify_local_stack.ps1 -FrontendEndpoint http://127.0.0.1:5173 -BackendEndpoint http://127.0.0.1:8080`
-- 停止：`powershell -ExecutionPolicy Bypass -File scripts/stop_all_local.ps1 -Force`
+- 启动 Docker 后端：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d`
+- 启动前端：`D:\App\nvm\nvm\v24.10.0\npm.cmd run dev`
+- 停止 Docker 环境：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down`
 
-### 模式二：Docker 后端联调
+### 模式二：前端本机开发 + Host Linux 已部署后端
 适用场景：
-- 验证 MySQL、Redis、MinIO、Elasticsearch、Qdrant、parser-worker 等容器依赖
-- 验证 Docker backend 的认证与健康检查
-- 验证前端通过代理访问容器 backend 的链路
+- 联调远端 Linux 环境上的 backend 与 parser-worker
+- 验证真实部署环境中的登录、检索、问答与管理接口
 
-当前验证过的一组端口：
-- Docker backend：`http://127.0.0.1:18080`
-- Docker 联调前端：`http://127.0.0.1:5176`
+前提条件：
+- Host Linux 已按 `docs/knowledge-base-deployment-host-linux.md` 完成部署
+- 前端开发机能够访问目标 `http://<host-linux-ip>:8080`
 
 Vite 代理切换方式：
-- `frontend/vite.config.ts` 支持使用 `VITE_API_PROXY_TARGET` 指定代理目标
+- `frontend/vite.config.ts` 使用 `VITE_API_PROXY_TARGET` 指定代理目标
 - `VITE_PORT` 可用于起第二份前端实例
 
 示例：
 - `VITE_API_PROXY_TARGET=http://127.0.0.1:18080`
-- `VITE_PORT=5176`
+- `VITE_PORT=5173`
+- `VITE_API_PROXY_TARGET=http://<host-linux-ip>:8080`
 
 ## 6. API 接入规则
 
@@ -145,7 +145,7 @@ Vite 代理切换方式：
 
 ## 8. 已验证的联调范围
 
-宿主机联调已验证：
+前端 + Docker backend 已验证：
 - 登录
 - 文档列表
 - 文档详情
@@ -159,28 +159,14 @@ Vite 代理切换方式：
 - 版本激活
 - 权限绑定
 - viewer 调 admin 接口返回 403
+- Docker `nginx -> backend` 统一入口
+- MinIO 存储闭环与 parser-worker 任务成功
 
-Docker 侧已验证：
-- parser-worker 容器启动
-- Docker backend 健康检查
-- Docker backend 登录
-- 宿主机前端代理到 Docker backend 的登录、搜索、问答、权限绑定等链路
+前端 + Host Linux backend 待使用已部署环境按同样链路回归。
 
-## 9. 重置与清理
-
-用于清理宿主机联调环境：
-- `powershell -ExecutionPolicy Bypass -File scripts/reset_local_state.ps1 -StopServices`
-
-效果：
-- 停止宿主机 frontend / backend 进程
-- 清理 `.runtime/`
-- 清理本地产物目录
-- 下次以 `-SeedTestData` 启动时重新恢复 seed 数据
-
-## 10. 当前仍未覆盖的范围
+## 9. 当前仍未覆盖的范围
 
 目前仍建议后续补齐：
-- 浏览器自动化回归
-- parser-worker 结果级验证，而不只是容器启动
-- Docker `nginx` 整体入口验证
+- 浏览器自动化以外的整页人工回归清单
 - 资源级权限真正生效后的前后端联调
+- 更大规模样本下的任务吞吐与性能验证

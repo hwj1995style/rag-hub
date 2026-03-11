@@ -26,6 +26,7 @@
 - `vector.endpoint`：Qdrant 地址
 - `vector.collection_name`：Qdrant collection 名称
 - `vector.embedding_dim`：embedding 维度
+- `storage.*`：MinIO 或本地共享目录配置
 
 ## 3. 当前能力范围
 
@@ -38,43 +39,41 @@
 - 在 MySQL 中保存 `kb_chunk_vector_ref` 映射
 - 分别回写 `parse_status` 和 `index_status`
 
-## 4. 常用命令
+## 4. 推荐运行方式
 
-### 4.1 本地运行
+### Docker 模式
 
 ```powershell
-../scripts/run_parser_worker.ps1 -InstallDeps
+docker compose -f ../deploy/docker/docker-compose.yml --env-file ../deploy/docker/.env up -d rag-hub-parser-worker
 ```
 
-### 4.2 运行测试
+### Host Linux 模式
+
+请按 [Host Linux 部署文档](../docs/knowledge-base-deployment-host-linux.md) 部署 parser-worker systemd 服务。
+
+## 5. 运行测试
 
 ```powershell
 ../scripts/test_parser_worker.ps1
 ```
 
-### 4.3 打包
+## 6. 打包
 
 ```powershell
 ../scripts/package_parser_worker.ps1
 ```
 
-## 5. 一键重建样例数据
+## 7. 联调与验收
 
 如需执行一轮完整样例入库并验证接口，可运行：
 
 ```powershell
 ../scripts/reindex_sample_data.ps1
-```
-
-之后可继续执行：
-
-```powershell
 ../scripts/api_smoke_test.ps1
 ../scripts/api_assert_test.ps1
-../scripts/verify_local_stack.ps1
 ```
 
-## 6. CI
+## 8. CI
 
 CI 文件：
 

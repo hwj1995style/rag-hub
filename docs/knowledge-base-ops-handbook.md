@@ -100,13 +100,13 @@ docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env
 - `/actuator/health` 返回 `UP`
 - `/api/search/query` 返回成功
 - `/api/qa/query` 返回成功
-- MySQL、Elasticsearch、Qdrant 状态正常
+- MySQL、Elasticsearch、Qdrant、MinIO 状态正常
 
-本地联调相关脚本：
+可复用的接口验收脚本：
 
-- `scripts/verify_local_stack.ps1`
 - `scripts/api_smoke_test.ps1`
 - `scripts/api_assert_test.ps1`
+- `deploy/linux/verify_deployment.sh`
 
 ## 9. 回滚条件
 

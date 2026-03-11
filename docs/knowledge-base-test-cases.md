@@ -30,7 +30,7 @@
 
 建议准备以下环境：
 
-- 开发环境：开发自测与接口调试
+- 开发环境：接口调试与前端联调
 - 测试环境：功能回归、联调、UAT
 - 预发环境：上线前最终验证
 
@@ -42,6 +42,11 @@
 - MinIO
 - backend
 - parser-worker
+
+推荐优先使用：
+
+- Docker 集成环境
+- Host Linux 已部署环境
 
 ## 4. 功能测试案例
 
@@ -202,18 +207,18 @@
 
 - backend 单元测试通过
 - parser-worker 单元测试通过
-- 本地或测试环境联调通过
-- `verify_local_stack.ps1` 或等价验收脚本通过
+- Docker 或 Host Linux 环境联调通过
+- `scripts/api_smoke_test.ps1` 或 `deploy/linux/verify_deployment.sh` 通过
 - Host Linux 或 Docker 部署手册走通
 
 ## 9. 推荐验收入口
 
-- 本地联调验收：
-  - `scripts/verify_local_stack.ps1`
-- 接口烟雾测试：
+- Docker / 远端接口烟雾测试：
   - `scripts/api_smoke_test.ps1`
 - 严格断言测试：
   - `scripts/api_assert_test.ps1`
+- Host Linux 部署验收：
+  - `deploy/linux/verify_deployment.sh`
 
 ## 10. 相关文档
 

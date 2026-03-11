@@ -39,6 +39,7 @@
 - JWT 签发与校验
 - admin 写接口鉴权
 - 检索、问答、持久化、日志
+- Docker 与 Host Linux 部署态运行
 
 ### 前端暂不负责
 
@@ -146,19 +147,13 @@ frontend/
 - 布局状态
 - 页面级轻量 UI 状态
 
-## 10. 本地联调
+## 10. 联调与部署
 
-推荐端口：
+推荐默认联调形态：
 
-- frontend：`5173`
-- backend：`8080`
-
-Vite proxy：
-
-- `/api` -> `http://127.0.0.1:8080`
-- `/actuator` -> `http://127.0.0.1:8080`
-
-## 11. 部署方式
+- frontend 本机运行在 `5173`
+- Vite 代理默认指向 Docker backend `http://127.0.0.1:18080`
+- 需要联调 Host Linux 时，通过 `VITE_API_PROXY_TARGET` 改为目标 Linux 地址
 
 推荐生产模式：
 

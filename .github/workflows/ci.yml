@@ -1,4 +1,4 @@
-﻿name: CI
+name: CI
 
 on:
   push:
@@ -63,15 +63,13 @@ jobs:
           $paths = @(
             "scripts/init_backend_env.ps1",
             "scripts/test_backend.ps1",
-            "scripts/run_backend.ps1",
             "scripts/package_backend.ps1",
-            "scripts/run_parser_worker.ps1",
             "scripts/test_parser_worker.ps1",
             "scripts/package_parser_worker.ps1",
             "scripts/reindex_sample_data.ps1",
             "scripts/api_smoke_test.ps1",
             "scripts/api_assert_test.ps1",
-            "scripts/verify_local_stack.ps1"
+            "deploy/linux/verify_deployment.sh"
           )
 
           foreach ($path in $paths) {
