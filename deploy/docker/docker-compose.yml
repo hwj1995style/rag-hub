@@ -111,12 +111,17 @@ services:
       KB_MINIO_SECRET_KEY: ${KB_MINIO_SECRET_KEY:-minioadmin123}
       KB_LLM_ENABLED: "${KB_LLM_ENABLED:-false}"
       KB_LLM_FAIL_OPEN: "${KB_LLM_FAIL_OPEN:-true}"
+      KB_BOOTSTRAP_ADMIN_ENABLED: "${KB_BOOTSTRAP_ADMIN_ENABLED:-false}"
+      KB_BOOTSTRAP_ADMIN_USERNAME: ${KB_BOOTSTRAP_ADMIN_USERNAME:-admin}
+      KB_BOOTSTRAP_ADMIN_PASSWORD: ${KB_BOOTSTRAP_ADMIN_PASSWORD:-ChangeMe123!}
+      KB_BOOTSTRAP_ADMIN_DISPLAY_NAME: ${KB_BOOTSTRAP_ADMIN_DISPLAY_NAME:-Local Admin}
+      KB_BOOTSTRAP_ADMIN_ROLE_CODE: ${KB_BOOTSTRAP_ADMIN_ROLE_CODE:-admin}
     ports:
       - '${KB_BACKEND_PORT_HOST:-8080}:8080'
     volumes:
       - ../../backend/target/rag-hub-backend-0.0.1-SNAPSHOT.jar:/app/app.jar
     healthcheck:
-      test: ["CMD-SHELL", "sh -c 'exec 3<>/dev/tcp/127.0.0.1/8080 && printf \"GET /actuator/health HTTP/1.1\\r\\nHost: localhost\\r\\nConnection: close\\r\\n\\r\\n\" >&3 && cat <&3 | grep \"200\"'"]
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health | grep '\"status\":\"UP\"'"]
       interval: 10s
       timeout: 5s
       retries: 12
