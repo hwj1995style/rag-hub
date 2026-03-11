@@ -3,6 +3,8 @@ import { login, seedInvalidSession, seedViewerSession } from './helpers';
 
 const seededDocumentId = '11111111-1111-1111-1111-111111111111';
 const seededHistoryVersionId = '22222222-2222-2222-2222-222222222223';
+const sampleTaskId = '44444444-4444-4444-4444-444444444444';
+const sampleQueryLogId = '66666666-6666-6666-6666-666666666666';
 
 test.describe('rag-hub core regression', () => {
   test('admin can log in and browse documents', async ({ page }) => {
@@ -32,6 +34,24 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByRole('heading', { name: 'QA Workbench' })).toBeVisible();
     await page.getByRole('button', { name: 'Ask' }).click();
     await expect(page.getByText(/retrievedCount:\s*1/)).toBeVisible();
+    await expect(page.getByRole('table')).toContainText('Customer Credit Policy');
+  });
+
+  test('admin can open the sample task detail page', async ({ page }) => {
+    await login(page);
+
+    await page.goto(`/tasks/${sampleTaskId}`);
+    await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
+    await expect(page.getByText('Task ID:')).toContainText(sampleTaskId);
+    await expect(page.getByText('success')).toBeVisible();
+  });
+
+  test('admin can open the sample query log detail page', async ({ page }) => {
+    await login(page);
+
+    await page.goto(`/query-logs/${sampleQueryLogId}`);
+    await expect(page.getByRole('heading', { name: 'Query Log Detail' })).toBeVisible();
+    await expect(page.getByText(sampleQueryLogId)).toBeVisible();
     await expect(page.getByRole('table')).toContainText('Customer Credit Policy');
   });
 
