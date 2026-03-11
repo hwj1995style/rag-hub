@@ -1,4 +1,4 @@
-param(
+﻿param(
     [switch]$Force
 )
 
@@ -8,7 +8,8 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $runtimeDir = Join-Path $repoRoot '.runtime'
 $pidFiles = @(
     @{ Name = 'backend'; Path = (Join-Path $runtimeDir 'backend.pid') },
-    @{ Name = 'parser-worker'; Path = (Join-Path $runtimeDir 'parser-worker.pid') }
+    @{ Name = 'parser-worker'; Path = (Join-Path $runtimeDir 'parser-worker.pid') },
+    @{ Name = 'frontend'; Path = (Join-Path $runtimeDir 'frontend.pid') }
 )
 
 foreach ($entry in $pidFiles) {

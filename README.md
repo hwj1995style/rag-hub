@@ -1,56 +1,69 @@
 # rag-hub
 
-`rag-hub` 是一个面向文档接入、混合检索和大模型问答的知识库平台。
+`rag-hub` 是一个面向文档接入、混合检索、问答编排和权限治理的 RAG 管理平台。
 
 ## 主要入口
 
-### 开发文档
-
+### 核心文档
+- 总体设计：`docs/knowledge-base-implementation-plan.md`
 - 开发指南：`docs/knowledge-base-development-guide.md`
-- 前端总体设计：`docs/frontend-architecture.md`
-- 前端开发文档：`docs/frontend-development-guide.md`
+- 前端设计：`docs/frontend-architecture.md`
+- 前端开发：`docs/frontend-development-guide.md`
 - 认证说明：`docs/knowledge-base-authentication.md`
 - API 规范：`docs/knowledge-base-api-spec.md`
-- 实施方案：`docs/knowledge-base-implementation-plan.md`
-- DDL 与初始化：`docs/knowledge-base-ddl-and-init.md`
-- 测试案例：`docs/knowledge-base-test-cases.md`
-
-### 本地开发与联调
-
-- backend 说明：`backend/README.md`
-- parser-worker 说明：`parser-worker/README.md`
-- 本地一键验收：`scripts/verify_local_stack.ps1`
-
-### 部署文档
-
 - Docker 部署：`docs/knowledge-base-deployment-docker.md`
 - Host Linux 部署：`docs/knowledge-base-deployment-host-linux.md`
-- 运维手册：`docs/knowledge-base-ops-handbook.md`
-- Docker 目录说明：`deploy/docker/README.md`
 
-## 当前认证状态
+### 代码目录
+- `backend/`：Spring Boot 后端 API
+- `frontend/`：React 前端控制台
+- `parser-worker/`：解析与索引 worker
+- `scripts/`：本地开发、联调、验证脚本
+- `deploy/`：Docker 与 Host Linux 部署资产
+- `docs/`：设计、开发、部署与运维文档
 
-后端已实现一版最小可用的认证鉴权能力：
+## 前端现状
 
-- `POST /api/auth/login` 登录换取 Bearer JWT
-- 除 `/api/auth/login`、`/actuator/health`、`/actuator/info` 外，其余接口默认要求认证
-- 文档上传、批量导入、重解析、版本激活、权限绑定等管理写接口要求 `admin` 角色
-- 资源级权限策略已保留数据模型与管理接口，但尚未接入搜索、问答和文档读取链路
+- 前端工程位于 `frontend/`
+- 技术栈：`React + TypeScript + Vite + React Router + TanStack Query + Zustand + Ant Design`
+- 当前已实现：登录、文档中心、检索工作台、问答工作台、权限绑定、任务详情、Query Log 详情
+- 前端通过 Vite 代理访问后端 `/api` 和 `/actuator`，便于本地前后端分离联调
 
-详细说明见：`docs/knowledge-base-authentication.md`
+## 本地前后端联调
+
+### 前置要求
+- 推荐 Node `24.x`
+- 后端使用仓库内 `tools/` 下的 JDK 17 与 Maven
+- Windows 上如果 `nvm use` 弹出“加载设置失败（拒绝访问）”，请直接使用 Node 24 的绝对路径
+
+### 常用命令
+- 启动后端和前端：
+  `powershell -ExecutionPolicy Bypass -File scripts/run_all_local.ps1 -StartFrontend -SkipWorker -SeedTestData -SkipEnvCheck`
+- 查看状态：
+  `powershell -ExecutionPolicy Bypass -File scripts/status_local.ps1 -CheckHealth`
+- 执行联调验证：
+  `powershell -ExecutionPolicy Bypass -File scripts/verify_local_stack.ps1 -FrontendEndpoint http://127.0.0.1:5173 -BackendEndpoint http://127.0.0.1:8080`
+- 停止本地进程：
+  `powershell -ExecutionPolicy Bypass -File scripts/stop_all_local.ps1 -Force`
+- 重置本地联调数据：
+  `powershell -ExecutionPolicy Bypass -File scripts/reset_local_state.ps1 -StopServices`
+
+### 说明
+- 默认前端地址：`http://127.0.0.1:5173`
+- 默认后端地址：`http://127.0.0.1:8080`
+- `reset_local_state.ps1` 会停止本地前后端进程、清理 `.runtime/` 和本地产物；重新执行启动脚本后，内存 H2 测试数据会按 seed SQL 恢复到初始状态
+- 如果 `5173` 被占用，Vite 会自动切换端口，可从 `.runtime/logs/frontend.out.log` 查看实际地址
+
+## 认证与权限
+
+- `POST /api/auth/login` 用于换取 Bearer JWT
+- 除 `/api/auth/login`、`/actuator/health`、`/actuator/info` 外，其余 API 默认都需要登录
+- 文档上传、批量导入、重解析、版本激活、权限绑定等管理写接口需要 `admin` 角色
+- 资源级权限策略模型已保留，但尚未接入检索、问答和文档读取链路
 
 ## 部署方式
 
-当前保留两条独立部署路径：
+- Docker：`deploy/docker/`
+- Host Linux：`deploy/linux/`
 
-- Host Linux：`systemd + 主机 Nginx + 主机发布脚本`
-- Docker：跨平台 `docker compose`
-
-## 关键目录
-
-- `backend/`：Spring Boot 后端服务
-- `parser-worker/`：Python 解析与索引 worker
-- `scripts/`：本地开发、联调、验收脚本
-- `deploy/linux/`：Host Linux 部署脚本与 systemd unit 文件
-- `deploy/docker/`：Docker 部署文件
-- `docs/`：架构、开发、部署、运维文档
+更详细的前端实现规划请参考 `docs/frontend-architecture.md` 与 `docs/frontend-development-guide.md`。

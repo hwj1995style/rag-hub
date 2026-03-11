@@ -1,5 +1,6 @@
-param(
+﻿param(
     [string]$BackendPort = '8080',
+    [string]$FrontendPort = '5173',
     [switch]$CheckHealth
 )
 
@@ -9,6 +10,7 @@ $repoRoot = Split-Path -Parent $PSScriptRoot
 $runtimeDir = Join-Path $repoRoot '.runtime'
 $backendPidFile = Join-Path $runtimeDir 'backend.pid'
 $workerPidFile = Join-Path $runtimeDir 'parser-worker.pid'
+$frontendPidFile = Join-Path $runtimeDir 'frontend.pid'
 
 function Show-ProcessStatus {
     param(
@@ -36,32 +38,44 @@ function Show-ProcessStatus {
     }
 }
 
+function Show-PortStatus {
+    param(
+        [string]$Name,
+        [int]$Port
+    )
+
+    $match = netstat -ano | Select-String ":$Port\s+.*LISTENING"
+    if ($match) {
+        Write-Host "[OK] $Name port listening: $Port"
+    }
+    else {
+        Write-Host "[FAIL] $Name port not listening: $Port"
+    }
+}
+
 Write-Host "Repository root: $repoRoot"
 
 Show-ProcessStatus -Name 'backend' -PidFile $backendPidFile
 Show-ProcessStatus -Name 'parser-worker' -PidFile $workerPidFile
+Show-ProcessStatus -Name 'frontend' -PidFile $frontendPidFile
 
-try {
-    $portInfo = Get-NetTCPConnection -LocalPort ([int]$BackendPort) -ErrorAction Stop | Select-Object -First 1
-    if ($null -ne $portInfo) {
-        Write-Host "[OK] backend port listening: $BackendPort State=$($portInfo.State)"
-    }
-    else {
-        Write-Host "[FAIL] backend port not listening: $BackendPort"
-    }
-}
-catch {
-    Write-Host "[FAIL] backend port not listening: $BackendPort"
-}
+Show-PortStatus -Name 'backend' -Port ([int]$BackendPort)
+Show-PortStatus -Name 'frontend' -Port ([int]$FrontendPort)
 
 if ($CheckHealth) {
-    $healthUrl = "http://localhost:$BackendPort/actuator/health"
-    try {
-        $response = Invoke-RestMethod -Uri $healthUrl -Method Get -TimeoutSec 5
-        $status = if ($null -ne $response.status) { $response.status } else { 'UNKNOWN' }
-        Write-Host "[OK] health endpoint: $healthUrl status=$status"
+    $backendHealth = curl.exe -s -o NUL -w "%{http_code}" "http://127.0.0.1:$BackendPort/actuator/health"
+    if ($backendHealth -eq '200') {
+        Write-Host "[OK] backend endpoint: http://127.0.0.1:$BackendPort/actuator/health status=$backendHealth"
     }
-    catch {
-        Write-Host "[FAIL] health endpoint unavailable: $healthUrl"
+    else {
+        Write-Host "[FAIL] backend endpoint unavailable: http://127.0.0.1:$BackendPort/actuator/health status=$backendHealth"
+    }
+
+    $frontendHealth = curl.exe -s -o NUL -w "%{http_code}" "http://127.0.0.1:$FrontendPort/"
+    if ($frontendHealth -eq '200') {
+        Write-Host "[OK] frontend endpoint: http://127.0.0.1:$FrontendPort/ status=$frontendHealth"
+    }
+    else {
+        Write-Host "[FAIL] frontend endpoint unavailable: http://127.0.0.1:$FrontendPort/ status=$frontendHealth"
     }
 }

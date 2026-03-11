@@ -1,4 +1,4 @@
-import { CloudUploadOutlined, InboxOutlined, ReloadOutlined } from '@ant-design/icons';
+﻿import { CloudUploadOutlined, InboxOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Alert,
@@ -64,6 +64,7 @@ export function DocumentsPage() {
       void message.success(`Batch import accepted. Batch ${data.batch_id}`);
       setBatchOpen(false);
       batchForm.resetFields();
+      void query.refetch();
     },
     onError: (error: Error) => void message.error(error.message),
   });
@@ -117,9 +118,10 @@ export function DocumentsPage() {
       title: 'Actions',
       key: 'action',
       render: (_: unknown, record: DocumentListItem) => (
-        <Space>
+        <Space wrap>
           <Link to={`/documents/${record.documentId}`}>Detail</Link>
           <Link to={`/documents/${record.documentId}/chunks`}>Chunks</Link>
+          <Link to="/tasks/44444444-4444-4444-4444-444444444444">Task view</Link>
         </Space>
       ),
     },
@@ -136,7 +138,7 @@ export function DocumentsPage() {
               Documents
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              This screen wires into list, detail, chunk, upload, and batch-import flows from the current backend.
+              This screen wires into list, detail, chunk, upload, batch-import, and task follow-up flows from the current backend.
             </Typography.Paragraph>
           </Col>
           <Col xs={24} lg={12}>
@@ -161,12 +163,14 @@ export function DocumentsPage() {
               <Space wrap>
                 <Typography.Text>document: {actionState.payload.document_id}</Typography.Text>
                 <Typography.Text>version: {actionState.payload.version_id}</Typography.Text>
+                <Link to={`/documents/${actionState.payload.document_id}`}>Open document</Link>
                 <Link to={`/tasks/${actionState.payload.task_id}`}>Open task {actionState.payload.task_id}</Link>
               </Space>
             ) : (
               <Space wrap>
                 <Typography.Text>batch: {actionState.payload.batch_id}</Typography.Text>
                 <Typography.Text>accepted: {actionState.payload.accepted_count}</Typography.Text>
+                <Typography.Text>tasks: {actionState.payload.task_count}</Typography.Text>
                 <Typography.Text>source: {actionState.payload.source_uri}</Typography.Text>
               </Space>
             )
