@@ -7,7 +7,7 @@
 - `backend/`：Spring Boot 后端 API
 - `frontend/`：React 前端控制台
 - `parser-worker/`：解析与索引 worker
-- `scripts/`：打包、测试、接口校验脚本
+- `scripts/`：打包、测试、接口校验与 WSL 前端脚本
 - `deploy/`：Docker 与 Host Linux 部署资产
 - `docs/`：设计、开发、部署文档
 
@@ -30,30 +30,41 @@
 
 ## 前后端联调
 
-### 推荐方式：前端本机开发 + Docker 后端
+### 推荐方式：WSL 前端 + Docker 后端
+
+首次准备 Ubuntu Node 24：
+
+```powershell
+wsl -d Ubuntu -- bash /mnt/d/Projects/rag-hub/scripts/bootstrap_frontend_wsl.sh
+```
+
+启动与检查：
 
 ```powershell
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
-cd frontend
-D:\App\nvm\nvm\v24.10.0\npm.cmd install
-$env:VITE_API_PROXY_TARGET = 'http://127.0.0.1:18080'
-D:\App\nvm\nvm\v24.10.0\npm.cmd run dev
+powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -InstallDeps
+powershell -ExecutionPolicy Bypass -File scripts/status_frontend_wsl.ps1
 ```
 
 默认地址：
 
-- 前端：`http://127.0.0.1:5173`
+- WSL 前端：`http://127.0.0.1:5174`
 - Docker backend：`http://127.0.0.1:18080`
 - Docker Nginx 统一入口：`http://127.0.0.1`
 
-### 可选方式：前端本机开发 + Host Linux 后端
+停止：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/stop_frontend_wsl.ps1
+docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
+```
+
+### 可选方式：WSL 前端 + Host Linux 后端
 
 适用于后端已经部署到 Linux 主机、前端只需要代理远端 API 的场景。
 
 ```powershell
-cd frontend
-$env:VITE_API_PROXY_TARGET = 'http://<host-linux-ip>:8080'
-D:\App\nvm\nvm\v24.10.0\npm.cmd run dev
+powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -ProxyTarget http://<host-linux-ip>:8080 -Port 5174
 ```
 
 ## storage.mode 与 MinIO 说明
@@ -76,11 +87,13 @@ D:\App\nvm\nvm\v24.10.0\npm.cmd run dev
 - `reparse -> success`
 - 旧 seed 文档 `/uploads/customer-credit-policy.pdf -> reparse success`
 - `nginx -> /api/auth/login`
+- WSL 前端 `5174 -> Docker backend 18080`
 
 ## 常用命令
 
 ```powershell
 D:\App\nvm\nvm\v24.10.0\npm.cmd run build --prefix frontend
+powershell -ExecutionPolicy Bypass -File scripts/status_frontend_wsl.ps1
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
 powershell -ExecutionPolicy Bypass -File scripts/api_smoke_test.ps1 -BackendEndpoint http://127.0.0.1:18080

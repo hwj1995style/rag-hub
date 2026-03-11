@@ -74,30 +74,36 @@ frontend/
 
 ### 阶段 4：联调收敛
 完成内容：
-- Docker 后端联调
-- Host Linux 已部署后端联调
+- WSL 前端 + Docker 后端联调
+- WSL 前端 + Host Linux 已部署后端联调
 - 上传、重解析、版本激活、权限绑定等 admin 写接口验证
 - Docker Nginx 统一入口验证
 
 ## 5. 联调模式
 
-### 模式一：前端本机开发 + Docker 后端
+### 模式一：WSL 前端 + Docker 后端
 适用场景：
 - 日常前端开发
+- 避开 Windows 宿主机上的 `spawn EPERM` 问题
 - 验证 MySQL、Redis、MinIO、Elasticsearch、Qdrant、parser-worker 等容器依赖
 - 验证 Docker backend 的认证、健康检查和任务闭环
 
+首次准备：
+- `wsl -d Ubuntu -- bash /mnt/d/Projects/rag-hub/scripts/bootstrap_frontend_wsl.sh`
+
 默认地址：
-- 前端：`http://127.0.0.1:5173`
+- 前端：`http://127.0.0.1:5174`
 - Docker backend：`http://127.0.0.1:18080`
 - Docker Nginx：`http://127.0.0.1`
 
 常用命令：
 - 启动 Docker 后端：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d`
-- 启动前端：`D:\App\nvm\nvm\v24.10.0\npm.cmd run dev`
+- 启动前端：`powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -InstallDeps`
+- 查看状态：`powershell -ExecutionPolicy Bypass -File scripts/status_frontend_wsl.ps1`
+- 停止前端：`powershell -ExecutionPolicy Bypass -File scripts/stop_frontend_wsl.ps1`
 - 停止 Docker 环境：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down`
 
-### 模式二：前端本机开发 + Host Linux 已部署后端
+### 模式二：WSL 前端 + Host Linux 已部署后端
 适用场景：
 - 联调远端 Linux 环境上的 backend 与 parser-worker
 - 验证真实部署环境中的登录、检索、问答与管理接口
@@ -106,14 +112,12 @@ frontend/
 - Host Linux 已按 `docs/knowledge-base-deployment-host-linux.md` 完成部署
 - 前端开发机能够访问目标 `http://<host-linux-ip>:8080`
 
+启动示例：
+- `powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -ProxyTarget http://<host-linux-ip>:8080 -Port 5174`
+
 Vite 代理切换方式：
 - `frontend/vite.config.ts` 使用 `VITE_API_PROXY_TARGET` 指定代理目标
-- `VITE_PORT` 可用于起第二份前端实例
-
-示例：
-- `VITE_API_PROXY_TARGET=http://127.0.0.1:18080`
-- `VITE_PORT=5173`
-- `VITE_API_PROXY_TARGET=http://<host-linux-ip>:8080`
+- `VITE_PORT` 可用于切换端口
 
 ## 6. API 接入规则
 
@@ -145,9 +149,14 @@ Vite 代理切换方式：
 
 ## 8. 已验证的联调范围
 
-前端 + Docker backend 已验证：
+WSL 前端 + Docker backend 已验证：
 - 登录
 - 文档列表
+- `5174 -> 18080` API 代理
+- `/actuator/health` 透传
+- Docker backend 认证成功
+
+此前前端 + Docker backend 业务链路还已验证：
 - 文档详情
 - chunk 过滤
 - 搜索
@@ -167,6 +176,7 @@ Vite 代理切换方式：
 ## 9. 当前仍未覆盖的范围
 
 目前仍建议后续补齐：
+- 在 WSL 前端环境下把 Playwright 全量跑通
 - 浏览器自动化以外的整页人工回归清单
 - 资源级权限真正生效后的前后端联调
 - 更大规模样本下的任务吞吐与性能验证
