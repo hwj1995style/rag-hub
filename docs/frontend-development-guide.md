@@ -2,145 +2,128 @@
 
 ## 1. 文档目标
 
-本文档将前端实现拆成可落地的开发阶段，便于逐步交付并与现有后端能力对齐。
+本文档用于指导 `frontend/` 工程的迭代开发，并约束前后端分离后的本地联调方式、页面优先级和交付边界。
 
-## 2. 第一阶段目标
+## 2. 当前实现范围
 
-首批交付目标是形成可用的管理后台，至少满足：
+当前前端已经具备以下能力：
+- 登录认证
+- 文档列表、文档详情、chunk 浏览
+- 搜索工作台
+- 问答工作台
+- 权限绑定
+- 任务详情
+- Query Log 详情
 
-- 能登录
-- 能查看文档列表和详情
-- 能查看 chunk
-- 能执行搜索
-- 能执行问答
-- admin 可见并可调用管理写接口
+当前前端技术栈：
+- React
+- TypeScript
+- Vite
+- React Router
+- TanStack Query
+- Zustand
+- Ant Design
 
-## 3. 工程初始化
+## 3. 工程目录建议
 
-建议新增目录：`frontend/`
+推荐目录结构如下：
 
-推荐初始化命令：
-
-```bash
-npm create vite@latest frontend -- --template react-ts
+```text
+frontend/
+  src/
+    components/
+    layouts/
+    pages/
+    router/
+    services/
+      api/
+      http/
+    stores/
+    types/
+    utils/
 ```
 
-建议核心依赖：
-
-```bash
-react-router-dom
-@tanstack/react-query
-zustand
-axios
-antd
-@ant-design/icons
-```
-
-## 4. 分阶段开发计划
+## 4. 开发阶段划分
 
 ### 阶段 1：工程骨架
-
-完成：
-
+完成内容：
 - Vite + React + TypeScript 初始化
-- router
-- query provider
+- Router 接入
+- Query Client 接入
 - Ant Design 接入
-- 基础布局
-- `httpClient`
-- local env 和 proxy 配置
+- 基础布局与登录态存储
 
 ### 阶段 2：认证链路
-
-完成：
-
+完成内容：
 - 登录页
-- `/api/auth/login` 集成
-- token 持久化
-- route guard
-- logout
-- `401` 自动处理
+- Bearer Token 注入
+- 路由守卫
+- 401 自动跳转登录页
+- 403 提示
 
-### 阶段 3：文档中心
-
-完成：
-
-- 文档列表页
-- 文档详情页
-- chunk 查看
-
-优先接入：
-
-- `GET /api/documents`
-- `GET /api/documents/{documentId}`
-- `GET /api/documents/{documentId}/chunks`
-
-其后再接入 admin 动作：
-
-- upload
-- batch import
-- reparse
-- activate version
-
-### 阶段 4：检索工作台
-
-完成：
-
-- 查询输入区
-- 可选 filters
-- 结果列表
-- 显示文档标题、定位、分数、摘要
-
-接口：`POST /api/search/query`
-
-### 阶段 5：QA 工作台
-
-完成：
-
-- 问题输入
-- 答案展示
-- citations 展示
-- topK / sessionId 控制
-- query log 跳转
-
-接口：
-
-- `POST /api/qa/query`
-- `GET /api/query-logs/{logId}`
-
-### 阶段 6：权限与任务
-
-完成：
-
+### 阶段 3：核心业务页
+完成内容：
+- 文档列表
+- 文档详情
+- Chunk 浏览
+- 搜索页
+- QA 页
 - 权限绑定页
 - 任务详情页
+- Query Log 详情页
 
-接口：
+### 阶段 4：本地联调收敛
+完成内容：
+- 宿主机模式联调
+- Docker 后端模式联调
+- 上传、重解析、版本激活、权限绑定等 admin 写接口验证
+- 状态检查与联调重置脚本
 
-- `POST /api/permissions/bind`
-- `GET /api/tasks/{taskId}`
+## 5. 本地联调模式
 
-## 5. 推荐开发顺序
+### 模式一：宿主机联调
+适用场景：
+- 开发前端页面
+- 联调宿主机 Spring Boot 后端
+- 使用内存 H2 seed 数据快速回归
 
-1. 登录页
-2. 主布局
-3. 文档列表
-4. 文档详情
-5. chunk 查看
-6. 搜索页
-7. QA 页
-8. 权限页
-9. 任务页
+默认地址：
+- 前端：`http://127.0.0.1:5173`
+- 后端：`http://127.0.0.1:8080`
 
-## 6. API 处理规则
+常用命令：
+- 启动：`powershell -ExecutionPolicy Bypass -File scripts/run_all_local.ps1 -StartFrontend -SkipWorker -SeedTestData -SkipEnvCheck`
+- 状态：`powershell -ExecutionPolicy Bypass -File scripts/status_local.ps1 -CheckHealth`
+- 验证：`powershell -ExecutionPolicy Bypass -File scripts/verify_local_stack.ps1 -FrontendEndpoint http://127.0.0.1:5173 -BackendEndpoint http://127.0.0.1:8080`
+- 停止：`powershell -ExecutionPolicy Bypass -File scripts/stop_all_local.ps1 -Force`
 
-- 页面不直接调用 axios
-- 统一解析 `code/message/traceId/data`
+### 模式二：Docker 后端联调
+适用场景：
+- 验证 MySQL、Redis、MinIO、Elasticsearch、Qdrant、parser-worker 等容器依赖
+- 验证 Docker backend 的认证与健康检查
+- 验证前端通过代理访问容器 backend 的链路
+
+当前验证过的一组端口：
+- Docker backend：`http://127.0.0.1:18080`
+- Docker 联调前端：`http://127.0.0.1:5176`
+
+Vite 代理切换方式：
+- `frontend/vite.config.ts` 支持使用 `VITE_API_PROXY_TARGET` 指定代理目标
+- `VITE_PORT` 可用于起第二份前端实例
+
+示例：
+- `VITE_API_PROXY_TARGET=http://127.0.0.1:18080`
+- `VITE_PORT=5176`
+
+## 6. API 接入规则
+
+统一要求：
+- 页面不直接散落调用 `axios`
+- 所有请求走 `services/api/*` 与 `services/http/client.ts`
+- 统一解析 `code / message / traceId / data`
 - 非 `KB-00000` 视为业务错误
-- 自动注入 Bearer token
 
-建议 query key：
-
+推荐 Query Key：
 - `['documents', filters]`
 - `['document', documentId]`
 - `['documentChunks', documentId, params]`
@@ -149,47 +132,55 @@ antd
 - `['task', taskId]`
 - `['queryLog', logId]`
 
-## 7. 本地联调建议
+## 7. 页面联调建议顺序
 
-推荐端口：
-
-- frontend：`5173`
-- backend：`8080`
-
-Vite proxy：
-
-- `/api` -> backend
-- `/actuator` -> backend
-
-联调顺序：
-
+建议顺序：
 1. 登录
 2. 文档列表
-3. 文档详情与 chunks
+3. 文档详情与 chunk
 4. 搜索
-5. QA
-6. admin 写接口
+5. 问答
+6. 任务与 Query Log
+7. admin 写接口
 
-## 8. 验收清单
+## 8. 已验证的联调范围
 
-- 登录成功与失败反馈正常
-- 刷新后登录态保持
-- `401` 跳回登录页
-- `403` 有无权限提示
-- 文档列表、详情、chunk 可正常查看
-- 搜索结果可展示
-- QA 答案与引用可展示
-- admin 与非 admin 按钮可见性有区别
+宿主机联调已验证：
+- 登录
+- 文档列表
+- 文档详情
+- chunk 过滤
+- 搜索
+- 问答
+- 任务详情
+- Query Log 详情
+- 上传
+- 重解析
+- 版本激活
+- 权限绑定
+- viewer 调 admin 接口返回 403
 
-## 9. 当前限制
+Docker 侧已验证：
+- parser-worker 容器启动
+- Docker backend 健康检查
+- Docker backend 登录
+- 宿主机前端代理到 Docker backend 的登录、搜索、问答、权限绑定等链路
 
-目前后端还未完成资源级权限过滤，因此前端不应假设：
+## 9. 重置与清理
 
-- 文档一定会按策略隐藏
-- 搜索结果一定会按资源策略过滤
-- QA 引用一定已经按资源权限裁剪
+用于清理宿主机联调环境：
+- `powershell -ExecutionPolicy Bypass -File scripts/reset_local_state.ps1 -StopServices`
 
-目前前端可做的仅是：
+效果：
+- 停止宿主机 frontend / backend 进程
+- 清理 `.runtime/`
+- 清理本地产物目录
+- 下次以 `-SeedTestData` 启动时重新恢复 seed 数据
 
-- 登录态控制
-- 基于 `roleCode` 的 UI 可见性控制
+## 10. 当前仍未覆盖的范围
+
+目前仍建议后续补齐：
+- 浏览器自动化回归
+- parser-worker 结果级验证，而不只是容器启动
+- Docker `nginx` 整体入口验证
+- 资源级权限真正生效后的前后端联调
