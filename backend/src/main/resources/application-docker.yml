@@ -1,4 +1,4 @@
-spring:
+﻿spring:
   datasource:
     url: jdbc:mysql://${KB_DB_HOST:mysql}:${KB_DB_PORT:3306}/${KB_DB_NAME:kb}?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
@@ -13,6 +13,9 @@ spring:
         type.preferred_uuid_jdbc_type: CHAR
 
 kb:
+  storage:
+    mode: ${KB_STORAGE_MODE:minio}
+    bucket: ${KB_STORAGE_BUCKET:kb-uploads}
   search:
     enabled: ${KB_ES_ENABLED:true}
   vector:

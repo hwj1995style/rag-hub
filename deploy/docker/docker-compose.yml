@@ -1,4 +1,4 @@
-services:
+﻿services:
   mysql:
     image: ${KB_MYSQL_IMAGE:-mysql:8.0}
     container_name: ${KB_MYSQL_CONTAINER:-kb-mysql}
@@ -109,6 +109,8 @@ services:
       KB_MINIO_ENDPOINT: http://minio:9000
       KB_MINIO_ACCESS_KEY: ${KB_MINIO_ACCESS_KEY:-minioadmin}
       KB_MINIO_SECRET_KEY: ${KB_MINIO_SECRET_KEY:-minioadmin123}
+      KB_STORAGE_MODE: ${KB_STORAGE_MODE:-minio}
+      KB_STORAGE_BUCKET: ${KB_STORAGE_BUCKET:-kb-uploads}
       KB_LLM_ENABLED: "${KB_LLM_ENABLED:-false}"
       KB_LLM_FAIL_OPEN: "${KB_LLM_FAIL_OPEN:-true}"
       KB_BOOTSTRAP_ADMIN_ENABLED: "${KB_BOOTSTRAP_ADMIN_ENABLED:-false}"
@@ -158,6 +160,12 @@ services:
       KB_QDRANT_COLLECTION: ${KB_QDRANT_COLLECTION:-kb_chunk}
       KB_EMBEDDING_MODEL: ${KB_EMBEDDING_MODEL:-mock-embedding-v1}
       KB_EMBEDDING_DIM: ${KB_EMBEDDING_DIM:-1024}
+      KB_STORAGE_MODE: ${KB_STORAGE_MODE:-minio}
+      KB_STORAGE_ENDPOINT: ${KB_STORAGE_ENDPOINT:-http://minio:9000}
+      KB_STORAGE_ACCESS_KEY: ${KB_STORAGE_ACCESS_KEY:-minioadmin}
+      KB_STORAGE_SECRET_KEY: ${KB_STORAGE_SECRET_KEY:-minioadmin123}
+      KB_STORAGE_BUCKET: ${KB_STORAGE_BUCKET:-kb-uploads}
+      KB_STORAGE_UPLOAD_ROOT: ${KB_STORAGE_UPLOAD_ROOT:-./mock-storage}
     volumes:
       - ../../parser-worker/mock-storage:/app/mock-storage
       - ../../parser-worker/tmp:/app/tmp

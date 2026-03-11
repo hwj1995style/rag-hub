@@ -1,22 +1,22 @@
-# Docker 部署说明
+# Docker deployment notes
 
-## 1. 作用
+## Purpose
 
-本目录保存 `rag-hub` 的跨平台 Docker 部署文件，适用于：
+This directory contains the Docker Compose stack, Nginx config, and env template for `rag-hub`.
+
+Supported environments:
 
 - Linux Docker Engine
-- macOS Docker Desktop
 - Windows Docker Desktop
+- macOS Docker Desktop
 
-## 2. 文件清单
+## Files
 
 - `docker-compose.yml`
 - `.env.example`
 - `nginx.conf`
 
-## 3. 组件清单
-
-当前 compose 栈包含：
+## Services in the stack
 
 - MySQL
 - Redis
@@ -27,47 +27,70 @@
 - rag-hub-parser-worker
 - nginx
 
-## 4. 快速使用
+## Quick start
 
-### 4.1 准备环境文件
+### Prepare env file
 
 ```bash
 cp deploy/docker/.env.example deploy/docker/.env
 ```
 
-按需修改端口、密码和开关配置。默认 MySQL 宿主机端口为 `13306`。
+MySQL uses host port `13306` by default to avoid common host conflicts on `3306`.
 
-### 4.2 准备 backend 包
+### Prepare backend artifact
 
-compose 默认需要：
+Compose mounts:
 
 - `backend/target/rag-hub-backend-0.0.1-SNAPSHOT.jar`
 
-### 4.3 启动容器
+### Start the stack
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
 ```
 
-### 4.4 查看状态
+### Check status
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
 ```
 
-### 4.5 停止容器
+### Stop the stack
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
 ```
 
-## 5. 认证相关变量
+## storage.mode and MinIO integration
 
-建议至少配置：
+Docker now defaults to:
+
+```env
+KB_STORAGE_MODE=minio
+KB_STORAGE_BUCKET=kb-uploads
+```
+
+In this mode:
+
+- the backend persists uploaded source files to MinIO
+- `kb_document.source_uri` and `kb_document_version.storage_path` use `minio://...`
+- parser-worker downloads source files with `KB_STORAGE_ENDPOINT / KB_STORAGE_ACCESS_KEY / KB_STORAGE_SECRET_KEY / KB_STORAGE_BUCKET`
+
+Default alignment:
+
+- backend: `KB_MINIO_ENDPOINT=http://minio:9000`
+- parser-worker: `KB_STORAGE_ENDPOINT=http://minio:9000`
+- bucket: `KB_STORAGE_BUCKET=kb-uploads`
+
+For legacy seeded rows that still use `/uploads/...`, parser-worker first tries MinIO and then falls back to local `mock-storage`.
+
+## Auth configuration suggestions
+
+Set these explicitly in real environments:
 
 - `KB_JWT_ISSUER`
 - `KB_JWT_SECRET`
 - `KB_JWT_EXPIRATION_MINUTES`
 - `KB_BOOTSTRAP_ADMIN_ENABLED`
 
-默认 Docker 配置中 `KB_BOOTSTRAP_ADMIN_ENABLED=false`，生产和联调环境应优先使用预置管理员账号，而不是长期依赖 bootstrap admin。
+For first-time Docker verification or local demos, bootstrap admin can be enabled temporarily. For longer-lived environments, create a real admin account and turn bootstrap admin back off.

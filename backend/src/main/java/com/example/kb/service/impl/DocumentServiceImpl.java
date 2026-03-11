@@ -17,6 +17,8 @@ import com.example.kb.repository.KbDocumentRepository;
 import com.example.kb.repository.KbDocumentVersionRepository;
 import com.example.kb.repository.KbIngestTaskRepository;
 import com.example.kb.service.DocumentService;
+import com.example.kb.storage.DocumentStorageService;
+import com.example.kb.storage.StoredFile;
 import java.time.OffsetDateTime;
 import java.util.Comparator;
 import java.util.List;
@@ -35,15 +37,18 @@ public class DocumentServiceImpl implements DocumentService {
     private final KbDocumentVersionRepository versionRepository;
     private final KbIngestTaskRepository taskRepository;
     private final KbChunkRepository chunkRepository;
+    private final DocumentStorageService storageService;
 
     public DocumentServiceImpl(KbDocumentRepository documentRepository,
                                KbDocumentVersionRepository versionRepository,
                                KbIngestTaskRepository taskRepository,
-                               KbChunkRepository chunkRepository) {
+                               KbChunkRepository chunkRepository,
+                               DocumentStorageService storageService) {
         this.documentRepository = documentRepository;
         this.versionRepository = versionRepository;
         this.taskRepository = taskRepository;
         this.chunkRepository = chunkRepository;
+        this.storageService = storageService;
     }
 
     @Override
@@ -51,11 +56,12 @@ public class DocumentServiceImpl implements DocumentService {
     public Object upload(MultipartFile file, String title, String bizDomain, String department, String securityLevel,
                          String sourceSystem, String owner, String permissionTags) {
         String fileName = file.getOriginalFilename() == null ? "unknown" : file.getOriginalFilename();
+        StoredFile storedFile = storageService.store(file);
         KbDocument document = new KbDocument();
         document.setDocCode("DOC-" + System.currentTimeMillis());
         document.setTitle(title == null || title.isBlank() ? fileName : title);
         document.setSourceType(resolveSourceType(fileName));
-        document.setSourceUri("/uploads/" + fileName);
+        document.setSourceUri(storedFile.sourceUri());
         document.setSourceSystem(sourceSystem);
         document.setOwner(owner);
         document.setDepartment(department);
@@ -68,9 +74,9 @@ public class DocumentServiceImpl implements DocumentService {
         version.setDocumentId(document.getId());
         version.setVersionNo("v1.0");
         version.setFileHash(UUID.randomUUID().toString().replace("-", ""));
-        version.setFileName(fileName);
-        version.setFileSize(file.getSize());
-        version.setStoragePath("/uploads/" + fileName);
+        version.setFileName(storedFile.fileName());
+        version.setFileSize(storedFile.fileSize());
+        version.setStoragePath(storedFile.storagePath());
         version.setParseStatus("pending");
         version.setIndexStatus("pending");
         version.setIsCurrent(true);
@@ -238,6 +244,7 @@ public class DocumentServiceImpl implements DocumentService {
         target.setEffectiveFrom(request == null || request.effectiveFrom() == null || request.effectiveFrom().isBlank()
                 ? OffsetDateTime.now()
                 : OffsetDateTime.parse(request.effectiveFrom()));
+        target.setRemark(request == null ? null : request.remark());
         versionRepository.saveAll(versions);
         document.setCurrentVersionId(verId);
         document.setStatus("active");

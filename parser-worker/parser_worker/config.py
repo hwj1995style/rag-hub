@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+﻿from dataclasses import dataclass
 from pathlib import Path
 import os
 import re
@@ -47,6 +47,10 @@ class DatabaseConfig:
 class StorageConfig:
     mode: str
     upload_root: Path
+    endpoint: str
+    access_key: str
+    secret_key: str
+    bucket: str
 
 
 @dataclass
@@ -98,6 +102,10 @@ def load_config(path: str) -> AppConfig:
         storage=StorageConfig(
             mode=data['storage']['mode'],
             upload_root=Path(data['storage']['upload_root']),
+            endpoint=data['storage'].get('endpoint', ''),
+            access_key=data['storage'].get('access_key', ''),
+            secret_key=data['storage'].get('secret_key', ''),
+            bucket=data['storage'].get('bucket', 'kb-uploads'),
         ),
         search=SearchConfig(
             enabled=str(data['search']['enabled']).lower() == 'true',

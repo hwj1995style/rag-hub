@@ -1,4 +1,4 @@
-server:
+﻿server:
   port: 8080
 
 spring:
@@ -32,9 +32,12 @@ management:
 
 kb:
   storage:
+    mode: ${KB_STORAGE_MODE:local}
     endpoint: ${KB_MINIO_ENDPOINT:http://127.0.0.1:9000}
     access-key: ${KB_MINIO_ACCESS_KEY:minioadmin}
     secret-key: ${KB_MINIO_SECRET_KEY:minioadmin123}
+    bucket: ${KB_STORAGE_BUCKET:kb-uploads}
+    upload-root: ${KB_STORAGE_UPLOAD_ROOT:parser-worker/mock-storage}
   search:
     enabled: ${KB_ES_ENABLED:false}
     es-uris: ${KB_ES_URIS:http://127.0.0.1:9200}
@@ -59,7 +62,7 @@ kb:
     model: ${KB_LLM_MODEL:gpt-4o-mini}
     temperature: ${KB_LLM_TEMPERATURE:0.2}
     timeout-seconds: ${KB_LLM_TIMEOUT_SECONDS:30}
-    system-prompt: ${KB_LLM_SYSTEM_PROMPT:你是企业知识库问答助手，请基于检索证据回答问题，无法确认时明确说明证据不足。}
+    system-prompt: ${KB_LLM_SYSTEM_PROMPT:浣犳槸浼佷笟鐭ヨ瘑搴撻棶绛斿姪鎵嬶紝璇峰熀浜庢绱㈣瘉鎹洖绛旈棶棰橈紝鏃犳硶纭鏃舵槑纭鏄庤瘉鎹笉瓒炽€倉}
     auth-header-name: ${KB_LLM_AUTH_HEADER_NAME:Authorization}
     auth-header-prefix: ${KB_LLM_AUTH_HEADER_PREFIX:Bearer }
     organization-header-name: ${KB_LLM_ORG_HEADER_NAME:}

@@ -29,16 +29,25 @@ public class KbProperties {
     }
 
     public static class Storage {
+        private String mode = "local";
         private String endpoint;
         private String accessKey;
         private String secretKey;
+        private String bucket = "kb-uploads";
+        private String uploadRoot = "parser-worker/mock-storage";
 
+        public String getMode() { return mode; }
+        public void setMode(String mode) { this.mode = mode; }
         public String getEndpoint() { return endpoint; }
         public void setEndpoint(String endpoint) { this.endpoint = endpoint; }
         public String getAccessKey() { return accessKey; }
         public void setAccessKey(String accessKey) { this.accessKey = accessKey; }
         public String getSecretKey() { return secretKey; }
         public void setSecretKey(String secretKey) { this.secretKey = secretKey; }
+        public String getBucket() { return bucket; }
+        public void setBucket(String bucket) { this.bucket = bucket; }
+        public String getUploadRoot() { return uploadRoot; }
+        public void setUploadRoot(String uploadRoot) { this.uploadRoot = uploadRoot; }
     }
 
     public static class Search {
@@ -97,7 +106,7 @@ public class KbProperties {
         private String model = "gpt-4o-mini";
         private double temperature = 0.2;
         private int timeoutSeconds = 30;
-        private String systemPrompt = "你是企业知识库问答助手。仅基于提供的上下文回答，并保持简洁准确。";
+        private String systemPrompt = "You are a knowledge base assistant. Answer only from retrieved evidence and state clearly when evidence is insufficient.";
         private String authHeaderName = "Authorization";
         private String authHeaderPrefix = "Bearer ";
         private String organizationHeaderName = "";

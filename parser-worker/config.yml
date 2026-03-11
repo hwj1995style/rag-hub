@@ -1,4 +1,4 @@
-worker:
+﻿worker:
   poll_interval_seconds: 5
   batch_size: 5
   download_dir: ./tmp/downloads
@@ -13,8 +13,12 @@ database:
   password: ${KB_DB_PASSWORD:change_me}
 
 storage:
-  mode: local
-  upload_root: ./mock-storage
+  mode: ${KB_STORAGE_MODE:local}
+  upload_root: ${KB_STORAGE_UPLOAD_ROOT:./mock-storage}
+  endpoint: ${KB_STORAGE_ENDPOINT:http://127.0.0.1:9000}
+  access_key: ${KB_STORAGE_ACCESS_KEY:minioadmin}
+  secret_key: ${KB_STORAGE_SECRET_KEY:minioadmin123}
+  bucket: ${KB_STORAGE_BUCKET:kb-uploads}
 
 search:
   enabled: ${KB_ES_ENABLED:true}

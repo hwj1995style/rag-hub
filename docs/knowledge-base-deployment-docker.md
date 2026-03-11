@@ -1,50 +1,50 @@
-# rag-hub Docker 部署文档
+# rag-hub Docker deployment guide
 
-## 1. 适用范围
+## Scope
 
-本文档用于通过 Docker / Docker Compose 部署 `rag-hub`，适用于：
+This guide covers Docker / Docker Compose deployment for `rag-hub` on:
 
 - Linux Docker Engine
 - Windows Docker Desktop
 - macOS Docker Desktop
 
-## 2. 首次部署最短路径
+## Fastest first-time setup
 
-### 2.1 准备环境文件
+### Prepare env file
 
 ```bash
 cp deploy/docker/.env.example deploy/docker/.env
 ```
 
-默认宿主机 MySQL 端口是 `13306 -> 3306`，用于避免部分环境下 `3306` 被占用或被限制。
+The default host mapping is `13306 -> 3306` for MySQL to avoid common local conflicts.
 
-### 2.2 准备 backend 包
+### Prepare backend artifact
 
-需要文件：
+Required file:
 
 - `backend/target/rag-hub-backend-0.0.1-SNAPSHOT.jar`
 
-### 2.3 启动容器
+### Start containers
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
 ```
 
-### 2.4 查看状态
+### Check status
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
 ```
 
-### 2.5 停止容器
+### Stop containers
 
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
 ```
 
-## 3. 认证配置
+## Authentication config
 
-建议显式配置：
+Recommended explicit settings:
 
 ```env
 KB_JWT_ISSUER=rag-hub
@@ -53,12 +53,84 @@ KB_JWT_EXPIRATION_MINUTES=120
 KB_BOOTSTRAP_ADMIN_ENABLED=false
 ```
 
-如需首次初始化管理员，可以临时开启 bootstrap admin，待初始化完成后再关闭。
+For first-time verification, bootstrap admin can be enabled temporarily and then disabled after setup.
 
-## 4. 启动顺序
+## Startup ordering
 
-Compose 已内置健康检查依赖链：
+Compose already enforces this health chain:
 
 - `mysql healthy -> rag-hub-backend`
 - `mysql healthy -> rag-hub-parser-worker`
 - `rag-hub-backend healthy -> nginx`
+
+## storage.mode and MinIO integration
+
+### Default Docker storage mode
+
+Docker now defaults to:
+
+```env
+KB_STORAGE_MODE=minio
+KB_STORAGE_BUCKET=kb-uploads
+```
+
+This means:
+
+- backend uploads persist the real source file into MinIO
+- `storage_path` is stored as `minio://kb-uploads/...`
+- parser-worker downloads from MinIO before chunking and indexing
+
+### Important variables
+
+Backend side:
+
+```env
+KB_MINIO_ENDPOINT=http://minio:9000
+KB_MINIO_ACCESS_KEY=minioadmin
+KB_MINIO_SECRET_KEY=minioadmin123
+KB_STORAGE_MODE=minio
+KB_STORAGE_BUCKET=kb-uploads
+```
+
+Parser-worker side:
+
+```env
+KB_STORAGE_ENDPOINT=http://minio:9000
+KB_STORAGE_ACCESS_KEY=minioadmin
+KB_STORAGE_SECRET_KEY=minioadmin123
+KB_STORAGE_BUCKET=kb-uploads
+KB_STORAGE_MODE=minio
+```
+
+### Legacy path compatibility
+
+For existing seeded rows, worker still supports fallback behavior:
+
+- if `storage_path` is the older `/uploads/...`
+- worker tries MinIO resolution first
+- if that is not applicable, it falls back to local `mock-storage`
+
+### Verified results
+
+The following were verified successfully in Docker:
+
+- new uploaded document: `upload -> ingest success`
+- new uploaded document: `reparse -> success`
+- seeded document `/uploads/customer-credit-policy.pdf -> reparse success`
+- Nginx unified entrypoint: `nginx -> /api/auth/login`
+
+## Troubleshooting
+
+If upload or reparse still fails in Docker, check these first:
+
+1. `rag-hub-backend` is running with `KB_STORAGE_MODE=minio`
+2. `rag-hub-parser-worker` has `KB_STORAGE_ENDPOINT / ACCESS_KEY / SECRET_KEY / BUCKET`
+3. MinIO is healthy and reachable at `http://127.0.0.1:9000`
+4. `docker logs rag-hub-parser-worker` no longer shows `source file not found`
+
+If you intentionally want local shared files instead of MinIO, align both sides with:
+
+```env
+KB_STORAGE_MODE=local
+KB_STORAGE_UPLOAD_ROOT=./mock-storage
+```
