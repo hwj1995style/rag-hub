@@ -1,0 +1,6 @@
+import { useQuery } from '@tanstack/react-query';
+import { Card, Descriptions, Typography } from 'antd';
+import { useParams } from 'react-router-dom';
+import { getTask } from '../services/api/tasks';
+import { formatDateTime } from '../utils/format';
+export function TaskDetailPage() { const { taskId = '' } = useParams(); const query = useQuery({ queryKey: ['task', taskId], queryFn: () => getTask(taskId), enabled: Boolean(taskId) }); return (<Card className="page-card" title="Task Detail" loading={query.isLoading}><Typography.Paragraph type="secondary">Task ID: {taskId}</Typography.Paragraph>{query.data && (<Descriptions bordered column={1}><Descriptions.Item label="taskType">{query.data.taskType}</Descriptions.Item><Descriptions.Item label="status">{query.data.status}</Descriptions.Item><Descriptions.Item label="step">{query.data.step}</Descriptions.Item><Descriptions.Item label="retryCount">{query.data.retryCount}</Descriptions.Item><Descriptions.Item label="startedAt">{formatDateTime(query.data.startedAt)}</Descriptions.Item><Descriptions.Item label="finishedAt">{formatDateTime(query.data.finishedAt)}</Descriptions.Item><Descriptions.Item label="errorMessage">{query.data.errorMessage || '-'}</Descriptions.Item></Descriptions>)}</Card>); }

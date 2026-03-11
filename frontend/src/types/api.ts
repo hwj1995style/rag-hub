@@ -1,0 +1,15 @@
+export type ApiEnvelope<T> = { code: string; message: string; traceId: string; data: T; };
+export type LoginResponse = { tokenType: string; accessToken: string; expiresInSeconds: number; user: { userId: string; username: string; displayName: string; roleCode: string; }; };
+export type PageResponse<T> = { total: number; pageNo: number; pageSize: number; items: T[]; };
+export type DocumentListItem = { documentId: string; title: string; bizDomain: string; department: string; status: string; currentVersionId: string; updatedAt: string; };
+export type DocumentDetail = { document_id: string; doc_code: string; title: string; source_type: string; source_uri: string; biz_domain: string; department: string; security_level: string; status: string; current_version: { version_id: string; version_no: string; parse_status: string; index_status: string; effective_from: string; effective_to: string; is_current: boolean; } | Record<string, never>; };
+export type ChunkItem = { chunkId: string; chunkNo: number; chunkType: string; titlePath: string; locator: string; pageNo: number; contentText: string; contentSummary: string; };
+export type SearchItem = { chunkId: string; documentId: string; documentTitle: string; titlePath: string; locator: string; score: number; snippet: string; };
+export type SearchResponse = { total: number; items: SearchItem[]; };
+export type Citation = { documentId: string; documentTitle: string; titlePath: string; locator: string; snippet: string; };
+export type QaResponse = { answer: string; confidence: number; citations: Citation[]; retrievedCount: number; usedChunkCount: number; sessionId: string; };
+export type TaskResponse = { taskId: string; taskType: string; status: string; step: string; retryCount: number; errorMessage: string | null; startedAt: string | null; finishedAt: string | null; };
+export type QueryLogDetail = { log_id: string; query_text: string; rewritten_query: string; answer_text: string; retrieved_chunk_ids: string[]; citations: Citation[]; feedback_score: number | null; latency_ms: number | null; trace_id: string; session_id?: string; created_at?: string; };
+export type PermissionBindResponse = { resource_type: string; resource_id: string; policy_count: number; };
+export type UploadResponse = { document_id: string; version_id: string; task_id: string; status: string; };
+export type BatchImportResponse = { batch_id: string; task_count: number; accepted_count: number; source_uri: string; };

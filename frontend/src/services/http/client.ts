@@ -1,0 +1,9 @@
+import axios from 'axios';
+import { message } from 'antd';
+import type { ApiEnvelope } from '../../types/api';
+import { useAuthStore } from '../../stores/authStore';
+export class ApiError extends Error { status?: number; code?: string; traceId?: string; constructor(messageText: string, options?: { status?: number; code?: string; traceId?: string }) { super(messageText); this.name = 'ApiError'; this.status = options?.status; this.code = options?.code; this.traceId = options?.traceId; } }
+const client = axios.create({ baseURL: '/', timeout: 15000 });
+client.interceptors.request.use((config) => { const token = useAuthStore.getState().accessToken; if (token) { config.headers.Authorization = `Bearer ${token}`; } return config; });
+client.interceptors.response.use((response) => response, (error) => { const status = error?.response?.status as number | undefined; const payload = error?.response?.data as Partial<ApiEnvelope<unknown>> | undefined; const code = payload?.code; const text = payload?.message || error.message || 'Request failed'; if (status === 401) { useAuthStore.getState().clearSession(); if (typeof window !== 'undefined' && window.location.pathname !== '/login') { void message.error('Session expired. Please log in again.'); window.location.assign('/login'); } } else if (status === 403) { void message.error('You do not have permission to perform this action.'); } return Promise.reject(new ApiError(text, { status, code, traceId: payload?.traceId })); });
+export async function request<T>(config: Parameters<typeof client.request>[0]): Promise<T> { const response = await client.request<ApiEnvelope<T>>(config); const payload = response.data; if (payload.code !== 'KB-00000') { throw new ApiError(payload.message, { status: response.status, code: payload.code, traceId: payload.traceId }); } return payload.data; }
