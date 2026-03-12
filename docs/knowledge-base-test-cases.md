@@ -230,8 +230,8 @@
 
 ## 11. 2026-03-12 Regression Update
 
-- Current primary regression setup: `Windows Playwright runner + WSL frontend + Docker backend`.
-- Latest verified Playwright result: `14 passed`.
-- Automated coverage includes login, documents, search, QA, task detail, query log detail, upload, reparse, activate, permission bind, empty-file failure, missing task/query-log failures, viewer access denial, and invalid-token redirect.
+- Current primary regression setup: `WSL frontend + WSL Playwright + Docker backend`.
+- Latest verified Playwright result: `18 passed`.
+- Automated coverage includes login, documents, search, QA, task detail, query log detail, upload, reparse, activate, permission bind, empty-file failure, permission-binding failure, missing task/query-log failures, viewer access denial, invalid-token redirect, and other inline failure prompts.
 - Docker-side integration has also passed for `nginx -> backend`, MinIO-backed upload storage, parser-worker task completion, and admin write operations.
 - Remaining manual follow-ups are Host Linux end-to-end regression, dependency failure UX, and future resource-level authorization validation.

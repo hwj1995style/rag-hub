@@ -44,7 +44,7 @@ wsl -d Ubuntu -- bash /mnt/d/Projects/rag-hub/scripts/bootstrap_frontend_wsl.sh
 启动 Docker 后端：
 
 ```powershell
-docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
+docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example up -d
 ```
 
 启动 WSL 前端：
@@ -57,14 +57,14 @@ powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -Install
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/status_frontend_wsl.ps1
-docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
+docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example ps
 ```
 
 停止环境：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/stop_frontend_wsl.ps1
-docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
+docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example down
 ```
 
 默认地址：
@@ -106,16 +106,20 @@ powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -ProxyTa
 - viewer 权限拦截
 - 无效 token 401 跳登录
 
-当前已经实测通过：`14 passed`
+当前已经实测通过：`18 passed`
 
-推荐运行方式：Windows Playwright Runner + WSL 前端 + Docker 后端。
+推荐运行方式：WSL Playwright + WSL 前端 + Docker 后端。
 
 示例：
 
 ```powershell
-$env:PLAYWRIGHT_BASE_URL='http://127.0.0.1:5174'
-$env:PLAYWRIGHT_EXECUTABLE_PATH='C:\Program Files\Google\Chrome\Application\chrome.exe'
-D:\App\nvm\nvm\v24.10.0\node.exe .\frontend\node_modules\@playwright\test\cli.js test --reporter=line
+wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwright_wsl.sh'
+```
+
+如需只跑单条或部分用例，可以继续追加 Playwright 参数，例如：
+
+```powershell
+wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwright_wsl.sh --grep "invalid stored token"'
 ```
 
 如果 `127.0.0.1:5174` 不可达，可把 `PLAYWRIGHT_BASE_URL` 改成 WSL 内网地址。
@@ -148,8 +152,8 @@ D:\App\nvm\nvm\v24.10.0\node.exe .\frontend\node_modules\@playwright\test\cli.js
 ```powershell
 D:\App\nvm\nvm\v24.10.0\npm.cmd run build --prefix frontend
 powershell -ExecutionPolicy Bypass -File scripts/status_frontend_wsl.ps1
-docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
-docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
+docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example ps
+docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example down
 powershell -ExecutionPolicy Bypass -File scripts/api_smoke_test.ps1 -BackendEndpoint http://127.0.0.1:8080
 powershell -ExecutionPolicy Bypass -File scripts/api_assert_test.ps1 -BackendEndpoint http://127.0.0.1:8080
 ```

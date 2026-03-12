@@ -93,15 +93,15 @@ frontend/
 
 默认地址：
 - 前端：`http://127.0.0.1:5174`
-- Docker backend：`http://127.0.0.1:18080`
+- Docker backend：`http://127.0.0.1:8080`
 - Docker Nginx：`http://127.0.0.1`
 
 常用命令：
-- 启动 Docker 后端：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d`
+- 启动 Docker 后端：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example up -d`
 - 启动前端：`powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -InstallDeps`
 - 查看状态：`powershell -ExecutionPolicy Bypass -File scripts/status_frontend_wsl.ps1`
 - 停止前端：`powershell -ExecutionPolicy Bypass -File scripts/stop_frontend_wsl.ps1`
-- 停止 Docker 环境：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down`
+- 停止 Docker 环境：`docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example down`
 
 ### 模式二：WSL 前端 + Host Linux 已部署后端
 适用场景：
@@ -152,7 +152,7 @@ Vite 代理切换方式：
 WSL 前端 + Docker backend 已验证：
 - 登录
 - 文档列表
-- `5174 -> 18080` API 代理
+- `5174 -> 8080` API 代理
 - `/actuator/health` 透传
 - Docker backend 认证成功
 
@@ -184,7 +184,7 @@ WSL 前端 + Docker backend 已验证：
 
 - Primary local workflow is now `WSL frontend + Docker backend`.
 - The Docker backend endpoint used by the frontend proxy is `http://127.0.0.1:8080`.
-- Playwright now runs against the WSL frontend and Docker backend successfully.
-- Latest verified result: `14 passed`.
-- Covered flows now include login, documents, chunks, search, QA, task detail, query log detail, upload, reparse, activate, permission bind, viewer 403, invalid token 401 redirect, and inline failure states.
+- Playwright now runs inside WSL against the WSL frontend and Docker backend successfully.
+- Latest verified result: `18 passed`.
+- Covered flows now include login, documents, chunks, search, QA, task detail, query log detail, upload, reparse, activate, permission bind, empty-file failure, permission-binding failure, missing task/query-log failures, viewer 403, invalid token 401 redirect, and inline failure states.
 - Remaining gaps are Host Linux regression, dependency-outage UX validation, and resource-level authorization after backend implementation.
