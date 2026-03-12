@@ -2,7 +2,7 @@
 set -euo pipefail
 
 PORT="${PORT:-5174}"
-PROXY_TARGET="${PROXY_TARGET:-http://127.0.0.1:18080}"
+PROXY_TARGET="${PROXY_TARGET:-http://127.0.0.1:8080}"
 REPO_ROOT="/mnt/d/Projects/rag-hub"
 FRONTEND_DIR="$REPO_ROOT/frontend"
 RUNTIME_DIR="$REPO_ROOT/.runtime"
@@ -11,7 +11,8 @@ PID_FILE="$RUNTIME_DIR/wsl-frontend-${PORT}.pid"
 OUT_LOG="$LOG_DIR/wsl-frontend-${PORT}.out.log"
 ERR_LOG="$LOG_DIR/wsl-frontend-${PORT}.err.log"
 NODE_BIN="$HOME/.local/node24/bin/node"
-VITE_PATTERN="node_modules/.bin/vite --host 0.0.0.0 --port ${PORT}"
+VITE_ENTRY="./node_modules/vite/bin/vite.js"
+VITE_PATTERN="node_modules/vite/bin/vite.js --host 0.0.0.0 --port ${PORT}"
 
 mkdir -p "$LOG_DIR"
 export PATH="$HOME/.local/node24/bin:$PATH"
@@ -33,7 +34,17 @@ if pgrep -f "$VITE_PATTERN" >/dev/null 2>&1; then
 fi
 
 cd "$FRONTEND_DIR"
-nohup env VITE_API_PROXY_TARGET="$PROXY_TARGET" "$NODE_BIN" ./node_modules/.bin/vite --host 0.0.0.0 --port "$PORT" >"$OUT_LOG" 2>"$ERR_LOG" </dev/null &
+setsid env VITE_API_PROXY_TARGET="$PROXY_TARGET" "$NODE_BIN" "$VITE_ENTRY" --host 0.0.0.0 --port "$PORT" --strictPort >"$OUT_LOG" 2>"$ERR_LOG" </dev/null &
+echo "$!" > "$PID_FILE"
 sleep 2
-pgrep -f "$VITE_PATTERN" | tail -n 1 > "$PID_FILE"
+if ! kill -0 "$(cat "$PID_FILE")" >/dev/null 2>&1; then
+  echo "start-failed" >&2
+  tail -n 20 "$ERR_LOG" >&2 || true
+  exit 1
+fi
+if ! pgrep -f "$VITE_PATTERN" >/dev/null 2>&1; then
+  echo "start-failed" >&2
+  tail -n 20 "$ERR_LOG" >&2 || true
+  exit 1
+fi
 echo "started:$(cat "$PID_FILE")"

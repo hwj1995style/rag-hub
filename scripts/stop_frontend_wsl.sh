@@ -4,7 +4,7 @@ set -euo pipefail
 PORT="${PORT:-5174}"
 REPO_ROOT="/mnt/d/Projects/rag-hub"
 PID_FILE="$REPO_ROOT/.runtime/wsl-frontend-${PORT}.pid"
-VITE_PATTERN="node_modules/.bin/vite --host 0.0.0.0 --port ${PORT}"
+VITE_PATTERN="node_modules/vite/bin/vite.js --host 0.0.0.0 --port ${PORT}"
 
 pid="none"
 if pgrep -f "$VITE_PATTERN" >/dev/null 2>&1; then

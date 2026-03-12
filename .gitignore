@@ -14,6 +14,7 @@ frontend/dist/
 frontend/.vite/
 frontend/*.tsbuildinfo
 frontend/vite.config.js
+frontend/vite.config.js.timestamp-*.mjs
 frontend/vite.config.d.ts
 frontend/playwright-report/
 frontend/test-results/
