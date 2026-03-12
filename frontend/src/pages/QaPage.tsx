@@ -1,6 +1,7 @@
-﻿import { LinkOutlined, MessageOutlined } from '@ant-design/icons';
+import { LinkOutlined, MessageOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { App, Button, Card, Col, Form, Input, InputNumber, Row, Space, Table, Typography } from 'antd';
+import { Alert, App, Button, Card, Col, Form, Input, InputNumber, Row, Space, Table, Typography } from 'antd';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { askQuestion } from '../services/api/qa';
 import type { Citation } from '../types/api';
@@ -8,10 +9,15 @@ import type { Citation } from '../types/api';
 export function QaPage() {
   const { message } = App.useApp();
   const [form] = Form.useForm();
+  const [queryError, setQueryError] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: askQuestion,
-    onError: (error: Error) => void message.error(error.message),
+    onSuccess: () => setQueryError(null),
+    onError: (error: Error) => {
+      setQueryError(error.message);
+      void message.error(error.message);
+    },
   });
 
   return (
@@ -32,7 +38,10 @@ export function QaPage() {
               form={form}
               layout="vertical"
               initialValues={{ query: 'business license', topK: 5, returnCitations: true, sessionId: 'frontend-session-001' }}
-              onFinish={(values) => mutation.mutate(values)}
+              onFinish={(values) => {
+                setQueryError(null);
+                mutation.mutate(values);
+              }}
             >
               <Form.Item name="query" label="Question" rules={[{ required: true }]}>
                 <Input.TextArea rows={4} placeholder="business license" />
@@ -69,6 +78,17 @@ export function QaPage() {
           </Col>
         </Row>
       </Card>
+
+      {queryError && (
+        <Alert
+          type="error"
+          showIcon
+          closable
+          onClose={() => setQueryError(null)}
+          message="QA request failed"
+          description={queryError}
+        />
+      )}
 
       <Card
         className="page-card"

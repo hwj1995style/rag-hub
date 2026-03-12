@@ -1,4 +1,4 @@
-﻿import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Tag, Typography } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -60,6 +60,15 @@ export function QueryLogPage() {
       </Card>
 
       <Card className="page-card" title="Log overview" loading={query.isLoading}>
+        {query.error && (
+          <Alert
+            style={{ marginBottom: 16 }}
+            type="error"
+            showIcon
+            message="Failed to load query log"
+            description={query.error instanceof Error ? query.error.message : 'Request failed'}
+          />
+        )}
         {query.data && (
           <Descriptions bordered column={1}>
             <Descriptions.Item label="Log ID">{query.data.log_id}</Descriptions.Item>

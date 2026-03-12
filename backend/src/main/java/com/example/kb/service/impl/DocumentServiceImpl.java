@@ -55,6 +55,9 @@ public class DocumentServiceImpl implements DocumentService {
     @Transactional
     public Object upload(MultipartFile file, String title, String bizDomain, String department, String securityLevel,
                          String sourceSystem, String owner, String permissionTags) {
+        if (file == null || file.isEmpty() || file.getSize() <= 0) {
+            throw new IllegalArgumentException("uploaded file must not be empty");
+        }
         String fileName = file.getOriginalFilename() == null ? "unknown" : file.getOriginalFilename();
         StoredFile storedFile = storageService.store(file);
         KbDocument document = new KbDocument();

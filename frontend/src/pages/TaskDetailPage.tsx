@@ -1,4 +1,4 @@
-﻿import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Tag, Typography } from 'antd';
 import { useMemo } from 'react';
@@ -84,6 +84,15 @@ export function TaskDetailPage() {
 
       <Card className="page-card" title="Task state" loading={query.isLoading}>
         <Typography.Paragraph type="secondary">Task ID: {taskId || '-'}</Typography.Paragraph>
+        {query.error && (
+          <Alert
+            style={{ marginBottom: 16 }}
+            type="error"
+            showIcon
+            message="Failed to load task"
+            description={query.error instanceof Error ? query.error.message : 'Request failed'}
+          />
+        )}
         {query.data && (
           <Descriptions bordered column={1}>
             <Descriptions.Item label="Task type">{query.data.taskType}</Descriptions.Item>

@@ -1,4 +1,4 @@
-﻿import { CloudUploadOutlined, InboxOutlined, ReloadOutlined } from '@ant-design/icons';
+import { CloudUploadOutlined, InboxOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
   Alert,
@@ -37,6 +37,8 @@ export function DocumentsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [batchOpen, setBatchOpen] = useState(false);
   const [actionState, setActionState] = useState<AdminActionState>(null);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [batchError, setBatchError] = useState<string | null>(null);
   const [uploadForm] = Form.useForm();
   const [batchForm] = Form.useForm();
 
@@ -49,24 +51,32 @@ export function DocumentsPage() {
     mutationFn: (payload: FormData) => uploadDocument(payload),
     onSuccess: (data) => {
       setActionState({ type: 'upload', payload: data });
+      setUploadError(null);
       void message.success(`Upload accepted. Task ${data.task_id}`);
       setUploadOpen(false);
       uploadForm.resetFields();
       void query.refetch();
     },
-    onError: (error: Error) => void message.error(error.message),
+    onError: (error: Error) => {
+      setUploadError(error.message);
+      void message.error(error.message);
+    },
   });
 
   const batchMutation = useMutation({
     mutationFn: batchImportDocuments,
     onSuccess: (data) => {
       setActionState({ type: 'batch', payload: data });
+      setBatchError(null);
       void message.success(`Batch import accepted. Batch ${data.batch_id}`);
       setBatchOpen(false);
       batchForm.resetFields();
       void query.refetch();
     },
-    onError: (error: Error) => void message.error(error.message),
+    onError: (error: Error) => {
+      setBatchError(error.message);
+      void message.error(error.message);
+    },
   });
 
   const items = query.data?.items ?? [];
@@ -178,6 +188,28 @@ export function DocumentsPage() {
         />
       )}
 
+      {uploadError && (
+        <Alert
+          type="error"
+          showIcon
+          closable
+          onClose={() => setUploadError(null)}
+          message="Upload failed"
+          description={uploadError}
+        />
+      )}
+
+      {batchError && (
+        <Alert
+          type="error"
+          showIcon
+          closable
+          onClose={() => setBatchError(null)}
+          message="Batch import failed"
+          description={batchError}
+        />
+      )}
+
       <Card className="page-card">
         <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
           <Input.Search
@@ -195,10 +227,23 @@ export function DocumentsPage() {
             </Button>
             {isAdmin(roleCode) && (
               <>
-                <Button type="primary" icon={<CloudUploadOutlined />} onClick={() => setUploadOpen(true)}>
+                <Button
+                  type="primary"
+                  icon={<CloudUploadOutlined />}
+                  onClick={() => {
+                    setUploadError(null);
+                    setUploadOpen(true);
+                  }}
+                >
                   Upload
                 </Button>
-                <Button icon={<InboxOutlined />} onClick={() => setBatchOpen(true)}>
+                <Button
+                  icon={<InboxOutlined />}
+                  onClick={() => {
+                    setBatchError(null);
+                    setBatchOpen(true);
+                  }}
+                >
                   Batch import
                 </Button>
               </>
@@ -219,7 +264,10 @@ export function DocumentsPage() {
       <Modal
         title="Upload document"
         open={uploadOpen}
-        onCancel={() => setUploadOpen(false)}
+        onCancel={() => {
+          setUploadError(null);
+          setUploadOpen(false);
+        }}
         onOk={() => uploadForm.submit()}
         confirmLoading={uploadMutation.isPending}
         okText="Submit upload"
@@ -229,10 +277,16 @@ export function DocumentsPage() {
           layout="vertical"
           initialValues={{ securityLevel: 'internal' }}
           onFinish={(values) => {
+            setUploadError(null);
             const formData = new FormData();
             const file = (values.file as UploadFile[] | undefined)?.[0]?.originFileObj;
             if (!file) {
               void message.error('Please choose a file');
+              return;
+            }
+            if ((file.size ?? 0) <= 0) {
+              setUploadError('uploaded file must not be empty');
+              void message.error('uploaded file must not be empty');
               return;
             }
             formData.append('file', file);
@@ -279,7 +333,10 @@ export function DocumentsPage() {
       <Modal
         title="Batch import"
         open={batchOpen}
-        onCancel={() => setBatchOpen(false)}
+        onCancel={() => {
+          setBatchError(null);
+          setBatchOpen(false);
+        }}
         onOk={() => batchForm.submit()}
         confirmLoading={batchMutation.isPending}
         okText="Submit import"
@@ -288,7 +345,10 @@ export function DocumentsPage() {
           form={batchForm}
           layout="vertical"
           initialValues={{ sourceType: 's3', securityLevel: 'internal' }}
-          onFinish={(values) => batchMutation.mutate(values)}
+          onFinish={(values) => {
+            setBatchError(null);
+            batchMutation.mutate(values);
+          }}
         >
           <Form.Item name="sourceType" label="Source type" rules={[{ required: true }]}>
             <Input placeholder="s3" />
