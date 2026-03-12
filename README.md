@@ -84,7 +84,9 @@ docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env
 适用于后端已经部署在 Linux 主机、前端只需要代理远端 API 的场景：
 
 ```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check_host_linux_backend.ps1 -BackendEndpoint http://<host-linux-ip>:8080 -Username <admin-user> -Password <admin-password>
 powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -ProxyTarget http://<host-linux-ip>:8080 -Port 5174
+wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && HOST_BACKEND_URL=http://<host-linux-ip>:8080 bash scripts/run_playwright_wsl_host.sh'
 ```
 
 ## Playwright 回归

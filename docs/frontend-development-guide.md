@@ -113,7 +113,9 @@ frontend/
 - 前端开发机能够访问目标 `http://<host-linux-ip>:8080`
 
 启动示例：
+- `powershell -ExecutionPolicy Bypass -File scripts/check_host_linux_backend.ps1 -BackendEndpoint http://<host-linux-ip>:8080 -Username <admin-user> -Password <admin-password>`
 - `powershell -ExecutionPolicy Bypass -File scripts/start_frontend_wsl.ps1 -ProxyTarget http://<host-linux-ip>:8080 -Port 5174`
+- `wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && HOST_BACKEND_URL=http://<host-linux-ip>:8080 bash scripts/run_playwright_wsl_host.sh'`
 
 Vite 代理切换方式：
 - `frontend/vite.config.ts` 使用 `VITE_API_PROXY_TARGET` 指定代理目标
