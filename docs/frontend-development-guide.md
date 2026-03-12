@@ -180,3 +180,11 @@ WSL 前端 + Docker backend 已验证：
 - 浏览器自动化以外的整页人工回归清单
 - 资源级权限真正生效后的前后端联调
 - 更大规模样本下的任务吞吐与性能验证
+## 10. 2026-03-12 Integration Update
+
+- Primary local workflow is now `WSL frontend + Docker backend`.
+- The Docker backend endpoint used by the frontend proxy is `http://127.0.0.1:8080`.
+- Playwright now runs against the WSL frontend and Docker backend successfully.
+- Latest verified result: `14 passed`.
+- Covered flows now include login, documents, chunks, search, QA, task detail, query log detail, upload, reparse, activate, permission bind, viewer 403, invalid token 401 redirect, and inline failure states.
+- Remaining gaps are Host Linux regression, dependency-outage UX validation, and resource-level authorization after backend implementation.

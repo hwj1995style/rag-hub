@@ -227,3 +227,11 @@
 - [API 规范](./knowledge-base-api-spec.md)
 - [DDL 与初始化](./knowledge-base-ddl-and-init.md)
 - [运维手册](./knowledge-base-ops-handbook.md)
+
+## 11. 2026-03-12 Regression Update
+
+- Current primary regression setup: `Windows Playwright runner + WSL frontend + Docker backend`.
+- Latest verified Playwright result: `14 passed`.
+- Automated coverage includes login, documents, search, QA, task detail, query log detail, upload, reparse, activate, permission bind, empty-file failure, missing task/query-log failures, viewer access denial, and invalid-token redirect.
+- Docker-side integration has also passed for `nginx -> backend`, MinIO-backed upload storage, parser-worker task completion, and admin write operations.
+- Remaining manual follow-ups are Host Linux end-to-end regression, dependency failure UX, and future resource-level authorization validation.
