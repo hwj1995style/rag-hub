@@ -55,3 +55,34 @@ export async function seedViewerSession(page: Page) {
     );
   });
 }
+
+export async function mockJsonError(
+  page: Page,
+  urlPart: string,
+  method: string,
+  status: number,
+  code: string,
+  message: string,
+) {
+  await page.route(
+    (url) => url.toString().includes(urlPart),
+    async (route) => {
+      if (route.request().method() !== method) {
+        await route.fallback();
+        return;
+      }
+
+      await route.fulfill({
+        status,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          code,
+          message,
+          traceId: 'playwright-mocked-error',
+          data: null,
+        }),
+      });
+    },
+    { times: 1 },
+  );
+}

@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, seedInvalidSession, seedViewerSession } from './helpers';
+import { login, mockJsonError, seedInvalidSession, seedViewerSession } from './helpers';
 
 const seededDocumentId = '11111111-1111-1111-1111-111111111111';
 const currentVersionId = '22222222-2222-2222-2222-222222222222';
@@ -29,6 +29,18 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByRole('table')).toContainText('chunk-1');
   });
 
+  test('search workbench shows an inline failure prompt when search backend fails', async ({ page }) => {
+    await login(page);
+    await mockJsonError(page, '/api/search/query', 'POST', 503, 'KB-50300', 'search backend unavailable');
+
+    await page.goto('/search');
+    await page.getByLabel('Query').fill('business license');
+    await page.getByRole('button', { name: 'Search' }).click();
+
+    await expect(page.getByText('Search failed')).toBeVisible();
+    await expect(page.getByText('search backend unavailable').first()).toBeVisible();
+  });
+
   test('qa workbench returns citations for seeded query', async ({ page }) => {
     await login(page);
 
@@ -37,6 +49,17 @@ test.describe('rag-hub core regression', () => {
     await page.getByRole('button', { name: 'Ask' }).click();
     await expect(page.getByText(/retrievedCount:\s*[1-9]/)).toBeVisible();
     await expect(page.getByRole('table')).toContainText('chunk-1');
+  });
+
+  test('qa workbench shows an inline failure prompt when qa backend fails', async ({ page }) => {
+    await login(page);
+    await mockJsonError(page, '/api/qa/query', 'POST', 503, 'KB-50301', 'qa backend unavailable');
+
+    await page.goto('/qa');
+    await page.getByRole('button', { name: 'Ask' }).click();
+
+    await expect(page.getByText('QA request failed')).toBeVisible();
+    await expect(page.getByText('qa backend unavailable').first()).toBeVisible();
   });
 
   test('admin can open the sample task detail page', async ({ page }) => {
@@ -103,6 +126,24 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByText('uploaded file must not be empty', { exact: true }).first()).toBeVisible();
   });
 
+  test('upload shows an inline failure prompt when ingest submission fails', async ({ page }) => {
+    await login(page);
+    await mockJsonError(page, '/api/documents/upload', 'POST', 500, 'KB-50020', 'upload storage unavailable');
+
+    await page.getByRole('button', { name: 'Upload' }).click();
+    await expect(page.getByRole('dialog', { name: 'Upload document' })).toBeVisible();
+    await page.locator('input[type="file"]').setInputFiles({
+      name: 'upload-failure.txt',
+      mimeType: 'text/plain',
+      buffer: Buffer.from('upload failure case\n'),
+    });
+    await page.getByLabel('Title').fill('Upload Failure Case');
+    await page.getByRole('button', { name: 'Submit upload' }).click();
+
+    await expect(page.getByText('Upload failed')).toBeVisible();
+    await expect(page.getByText('upload storage unavailable').first()).toBeVisible();
+  });
+
   test('admin can create a reparse task from document detail', async ({ page }) => {
     await login(page);
 
@@ -143,6 +184,21 @@ test.describe('rag-hub core regression', () => {
     const payload = await response.json();
     expect(payload.code).toBe('KB-00000');
     expect(payload.data.policy_count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('permission binding shows an inline failure prompt when the backend rejects the request', async ({ page }) => {
+    await login(page);
+    await mockJsonError(page, '/api/permissions/bind', 'POST', 503, 'KB-50302', 'permission store unavailable');
+
+    await page.goto('/permissions');
+    await expect(page.getByText('Permission Binding')).toBeVisible();
+    const responsePromise = page.waitForResponse(
+      (response) => response.url().includes('/api/permissions/bind') && response.request().method() === 'POST',
+    );
+    await page.getByRole('button', { name: 'Submit' }).click();
+    await responsePromise;
+
+    await expect(page.getByText('permission store unavailable').first()).toBeVisible({ timeout: 10000 });
   });
 
   test('missing task id shows an inline failure prompt', async ({ page }) => {

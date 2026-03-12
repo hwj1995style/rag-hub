@@ -11,15 +11,20 @@ export function PermissionsPage() {
   const roleCode = useAuthStore((state) => state.user?.roleCode);
   const [form] = Form.useForm();
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const mutation = useMutation({
     mutationFn: bindPermissions,
     onSuccess: (data) => {
       const text = `Stored ${data.policy_count} policies`;
       setSuccessMessage(text);
+      setErrorMessage(null);
       void message.success(text);
     },
-    onError: (error: Error) => void message.error(error.message),
+    onError: (error: Error) => {
+      setErrorMessage(error.message);
+      void message.error(error.message);
+    },
   });
 
   if (!isAdmin(roleCode)) {
@@ -43,6 +48,17 @@ export function PermissionsPage() {
         />
       )}
 
+      {errorMessage && (
+        <Alert
+          type="error"
+          showIcon
+          closable
+          onClose={() => setErrorMessage(null)}
+          message="Permission binding failed"
+          description={errorMessage}
+        />
+      )}
+
       <Card className="page-card" title="Permission Binding" extra={<SafetyOutlined />}>
         <Typography.Paragraph type="secondary">
           Resource-level policy enforcement is not wired into retrieval yet, so this page currently focuses on writing policies through POST /api/permissions/bind.
@@ -57,6 +73,7 @@ export function PermissionsPage() {
           }}
           onFinish={(values) => {
             setSuccessMessage(null);
+            setErrorMessage(null);
             mutation.mutate(values);
           }}
         >
