@@ -1,86 +1,55 @@
 # rag-hub Parser Worker
 
-## 1. 作用
+## Purpose
 
-`parser-worker` 是 `rag-hub` 的 Python 解析与索引 worker，负责：
+`parser-worker` is the Python ingestion and indexing worker for `rag-hub`.
 
-- 轮询 MySQL 中的待处理任务
-- 读取文档和版本元数据
-- 解析文档内容并切分 chunk
-- 写入 `kb_chunk`
-- 写入 Elasticsearch 全文索引
-- 写入 Qdrant 向量索引
-- 回写 `kb_chunk_vector_ref`
-- 更新解析状态和索引状态
+It is responsible for:
+- polling pending ingest and reparse tasks from MySQL
+- downloading source files from MinIO or local fallback storage
+- parsing source content into chunks
+- writing chunk metadata into MySQL
+- writing full-text content into Elasticsearch
+- writing vectors into Qdrant
+- updating task, parse, and index status
 
-## 2. 配置文件
+## Deployment modes
 
-默认配置文件：
+Supported modes:
+- Docker
+- Host Linux
 
-- `config.yml`
+## Primary scripts
 
-关键配置项：
+- `../scripts/test_parser_worker.ps1`
+- `../scripts/package_parser_worker.ps1`
 
-- `database.*`：MySQL 连接配置
-- `search.*`：Elasticsearch 地址和索引名
-- `vector.endpoint`：Qdrant 地址
-- `vector.collection_name`：Qdrant collection 名称
-- `vector.embedding_dim`：embedding 维度
-- `storage.*`：MinIO 或本地共享目录配置
+## Recommended workflow
 
-## 3. 当前能力范围
-
-当前实现已经支持：
-
-- 原子认领 `pending` 任务
-- 解析并落库 chunk
-- 向 Elasticsearch 写入全文索引
-- 向 Qdrant 写入向量
-- 在 MySQL 中保存 `kb_chunk_vector_ref` 映射
-- 分别回写 `parse_status` 和 `index_status`
-
-## 4. 推荐运行方式
-
-### Docker 模式
+### Docker mode
 
 ```powershell
-docker compose -f ../deploy/docker/docker-compose.yml --env-file ../deploy/docker/.env up -d rag-hub-parser-worker
+docker compose -f ../deploy/docker/docker-compose.yml --env-file ../deploy/docker/.env.example up -d rag-hub-parser-worker
 ```
 
-### Host Linux 模式
+### Host Linux mode
 
-请按 [Host Linux 部署文档](../docs/knowledge-base-deployment-host-linux.md) 部署 parser-worker systemd 服务。
+Follow:
+- `../docs/knowledge-base-deployment-host-linux.md`
 
-## 5. 运行测试
+## Tests
 
 ```powershell
-../scripts/test_parser_worker.ps1
+powershell -ExecutionPolicy Bypass -File ../scripts/test_parser_worker.ps1
 ```
 
-## 6. 打包
+## Packaging
 
 ```powershell
-../scripts/package_parser_worker.ps1
+powershell -ExecutionPolicy Bypass -File ../scripts/package_parser_worker.ps1
 ```
 
-## 7. 联调与验收
+## CI
 
-如需执行一轮完整样例入库并验证接口，可运行：
-
-```powershell
-../scripts/reindex_sample_data.ps1
-../scripts/api_smoke_test.ps1
-../scripts/api_assert_test.ps1
-```
-
-## 8. CI
-
-CI 文件：
-
+CI definition:
 - `../.github/workflows/ci.yml`
-
-当前 CI 会校验：
-
-- backend 测试
-- parser-worker 测试
-- 关键脚本存在性

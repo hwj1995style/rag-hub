@@ -8,7 +8,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $templatePath = Join-Path $repoRoot 'deploy\elasticsearch\kb_chunk_index_template.json'
 $qdrantPayloadPath = Join-Path $repoRoot 'deploy\qdrant\kb_chunk_collection.json'
 

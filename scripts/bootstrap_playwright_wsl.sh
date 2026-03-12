@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 set -euo pipefail
 
 NODE_VERSION="${NODE_VERSION:-24.10.0}"

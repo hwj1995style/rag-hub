@@ -1,135 +1,98 @@
-# rag-hub Host Linux 部署文档
+# Host Linux Deployment Guide
 
-## 1. 适用范围
+## Scope
 
-本文档用于主机直装模式部署，适用于：
+This guide describes the Host Linux deployment mode.
 
-- RHEL / Rocky / AlmaLinux / CentOS 类发行版
-- Ubuntu / Debian 类发行版
+Host Linux now includes these frontend assets as well:
+- `scripts/package_frontend.ps1`
+- `deploy/linux/deploy_frontend.sh`
+- `deploy/linux/rollback_frontend.sh`
+- `deploy/nginx/kb.conf`
 
-部署方式为：
-
-- 主机安装 Java、Python、Nginx、MySQL 客户端
-- 使用 `systemd` 托管 `backend` 和 `parser-worker`
-- 由主机 Nginx 做统一反向代理
-
-## 2. 首次部署最短路径
-
-首次部署建议按以下顺序执行：
-
-### 2.1 环境预检
-
-```bash
-bash deploy/linux/preflight_check.sh
-```
-
-### 2.2 安装运行时
-
-```bash
-sudo bash deploy/linux/install_runtime.sh
-```
-
-### 2.3 准备环境文件
-
-```bash
-mkdir -p /app/kb/config
-cp deploy/linux/kb.env.template /app/kb/config/kb.env
-vi /app/kb/config/kb.env
-```
-
-### 2.4 发布 backend
-
-```bash
-/app/kb/deploy/linux/deploy_backend.sh
-```
-
-### 2.5 发布 parser-worker
-
-```bash
-/app/kb/deploy/linux/deploy_parser_worker.sh
-```
-
-### 2.6 执行验收
-
-```bash
-/app/kb/deploy/linux/verify_deployment.sh
-```
-
-### 2.7 回滚入口
-
-```bash
-/app/kb/deploy/linux/rollback_backend.sh
-/app/kb/deploy/linux/rollback_parser_worker.sh
-```
-
-## 3. 目录结构
-
-推荐目录：
+## Recommended layout
 
 - `/app/kb/backend`
 - `/app/kb/parser-worker`
+- `/app/kb/frontend/current`
 - `/app/kb/config`
 - `/app/kb/logs`
 - `/app/kb/packages`
 - `/app/kb/backups`
-- `/data/kb`
 
-## 4. 关键脚本
+## Recommended deployment order
 
-- 环境预检：`deploy/linux/preflight_check.sh`
-- 运行时安装：`deploy/linux/install_runtime.sh`
-- 发布 backend：`deploy/linux/deploy_backend.sh`
-- 发布 parser-worker：`deploy/linux/deploy_parser_worker.sh`
-- 回滚 backend：`deploy/linux/rollback_backend.sh`
-- 回滚 parser-worker：`deploy/linux/rollback_parser_worker.sh`
-- 部署验收：`deploy/linux/verify_deployment.sh`
+Environment preflight:
+```bash
+bash deploy/linux/preflight_check.sh
+```
 
-## 5. 环境文件
+Install runtime:
+```bash
+sudo bash deploy/linux/install_runtime.sh
+```
 
-统一模板：
-
-- `deploy/linux/kb.env.template`
-
-推荐操作：
-
+Prepare env file:
 ```bash
 mkdir -p /app/kb/config
 cp deploy/linux/kb.env.template /app/kb/config/kb.env
 vi /app/kb/config/kb.env
 ```
 
-## 6. systemd 与 Nginx
+Deploy backend:
+```bash
+sudo /app/kb/deploy/linux/deploy_backend.sh
+```
 
-相关文件：
+Deploy parser worker:
+```bash
+sudo /app/kb/deploy/linux/deploy_parser_worker.sh
+```
 
-- `deploy/linux/systemd/rag-hub-backend.service`
-- `deploy/linux/systemd/rag-hub-parser-worker.service`
-- `deploy/nginx/kb.conf`
-- `deploy/nginx/README.md`
+Deploy frontend:
+```bash
+sudo /app/kb/deploy/linux/deploy_frontend.sh
+```
 
-## 7. 发布与回滚
-
-发布前、发布中、发布后检查，以及回滚条件和回滚命令，统一维护在：
-
-- [运维手册](./knowledge-base-ops-handbook.md)
-
-## 8. 部署验收
-
-部署完成后执行：
-
+Verify deployment:
 ```bash
 /app/kb/deploy/linux/verify_deployment.sh
 ```
 
-验收重点：
+## Frontend packaging flow
 
-- systemd 服务状态正常
-- Nginx 反代正常
-- MySQL / Elasticsearch / Qdrant / MinIO 可达
-- `/actuator/health` 正常
-- `/api/search/query` 可访问
+Create the frontend package on the development machine:
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/package_frontend.ps1
+```
 
-## 9. 相关文档
+Artifact output:
+- `dist/frontend/rag-hub-frontend-dist.tar.gz`
 
-- [运维手册](./knowledge-base-ops-handbook.md)
-- [开发指南](./knowledge-base-development-guide.md)
+Publish the artifact to the Host Linux package directory, then run `deploy_frontend.sh`.
+
+## Host nginx role
+
+`deploy/nginx/kb.conf` now serves frontend static files from:
+- `/app/kb/frontend/current`
+
+and proxies:
+- `/api/*` to `127.0.0.1:8080`
+- `/actuator/health` to `127.0.0.1:8080`
+
+## Rollback
+
+Backend rollback:
+```bash
+sudo /app/kb/deploy/linux/rollback_backend.sh
+```
+
+Parser worker rollback:
+```bash
+sudo /app/kb/deploy/linux/rollback_parser_worker.sh
+```
+
+Frontend rollback:
+```bash
+sudo /app/kb/deploy/linux/rollback_frontend.sh
+```

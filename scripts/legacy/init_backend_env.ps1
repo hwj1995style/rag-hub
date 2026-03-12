@@ -6,7 +6,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $toolsDir = Join-Path $repoRoot 'tools'
 $javaHome = Join-Path $toolsDir 'jdk-17.0.14+7'
 $mavenHome = Join-Path $toolsDir 'apache-maven-3.9.13'

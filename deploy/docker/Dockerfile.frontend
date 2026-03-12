@@ -1,0 +1,4 @@
+FROM nginx:1.27
+
+COPY deploy/docker/frontend-site.conf /etc/nginx/conf.d/default.conf
+COPY frontend/dist /usr/share/nginx/html

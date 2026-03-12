@@ -3,7 +3,6 @@ import { login, mockJsonError, seedInvalidSession, seedViewerSession } from './h
 
 const seededDocumentId = '11111111-1111-1111-1111-111111111111';
 const currentVersionId = '22222222-2222-2222-2222-222222222222';
-const sampleTaskId = '44444444-4444-4444-4444-444444444444';
 const sampleQueryLogId = '66666666-6666-6666-6666-666666666666';
 const missingTaskId = '99999999-9999-9999-9999-999999999999';
 const missingQueryLogId = '77777777-7777-7777-7777-777777777777';
@@ -62,13 +61,37 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByText('qa backend unavailable').first()).toBeVisible();
   });
 
+  test('admin can open the task center and inspect seeded tasks', async ({ page }) => {
+    await login(page);
+
+    await page.goto(`/tasks?documentId=${seededDocumentId}`);
+    await expect(page.getByRole('heading', { name: 'Task Center' })).toBeVisible();
+    await expect(page.getByRole('table')).toContainText(seededDocumentId);
+    await expect(page.getByRole('table')).toContainText(/ingest|reparse|batch_import/);
+    const firstTaskLink = page.locator('table a[href^="/tasks/"]').first();
+    await expect(firstTaskLink).toBeVisible();
+    const taskHref = await firstTaskLink.getAttribute('href');
+    expect(taskHref).toBeTruthy();
+
+    await firstTaskLink.click();
+    await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
+    await expect(page).toHaveURL(taskHref ? new RegExp(`${taskHref}$`) : /\/tasks\//);
+  });
+
   test('admin can open the sample task detail page', async ({ page }) => {
     await login(page);
 
-    await page.goto(`/tasks/${sampleTaskId}`);
+    await page.goto(`/tasks?documentId=${seededDocumentId}`);
+    const firstTaskLink = page.locator('table a[href^="/tasks/"]').first();
+    await expect(firstTaskLink).toBeVisible();
+    const taskHref = await firstTaskLink.getAttribute('href');
+    const taskId = taskHref?.replace('/tasks/', '') ?? '';
+
+    expect(taskId).not.toBe('');
+    await page.goto(taskHref ?? `/tasks/${taskId}`);
     await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
-    await expect(page.getByText('Task ID:')).toContainText(sampleTaskId);
-    await expect(page.getByText('success')).toBeVisible();
+    await expect(page.getByText('Task ID:')).toContainText(taskId);
+    await expect(page.getByText(/pending|running|success|failed/).first()).toBeVisible();
   });
 
   test('admin can open the sample query log detail page', async ({ page }) => {
@@ -107,6 +130,27 @@ test.describe('rag-hub core regression', () => {
     await expect(page).toHaveURL(/\/tasks\//);
     await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
     await expect(page.getByText('Task ID:')).toContainText(href?.replace('/tasks/', '') ?? '');
+  });
+
+  test('admin can submit a batch import and open the created task', async ({ page }) => {
+    await login(page);
+
+    await page.getByRole('button', { name: 'Batch import' }).click();
+    await expect(page.getByRole('dialog', { name: 'Batch import' })).toBeVisible();
+    await page.getByLabel('Source type').fill('s3');
+    await page.getByLabel('Source URI').fill('s3://playwright/policies');
+    await page.getByLabel('Domain').fill('risk');
+    await page.getByLabel('Department').fill('automation');
+    await page.getByRole('button', { name: 'Submit import' }).click();
+
+    await expect(page.getByText('Batch import request submitted')).toBeVisible();
+    const taskLink = page.locator('a[href^="/tasks/"]').filter({ hasText: 'Open task' }).last();
+    await expect(taskLink).toBeVisible();
+    await taskLink.click();
+
+    await expect(page).toHaveURL(/\/tasks\//);
+    await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
+    await expect(page.getByText('batch_import')).toBeVisible();
   });
 
   test('empty file upload shows a stable failure prompt', async ({ page }) => {

@@ -1,4 +1,4 @@
-﻿import {
+import {
   BookOutlined,
   FileSearchOutlined,
   LoginOutlined,
@@ -25,7 +25,7 @@ export function AppLayout() {
       { key: '/documents', icon: <BookOutlined />, label: 'Documents' },
       { key: '/search', icon: <SearchOutlined />, label: 'Search' },
       { key: '/qa', icon: <FileSearchOutlined />, label: 'QA' },
-      { key: '/tasks/44444444-4444-4444-4444-444444444444', icon: <UnorderedListOutlined />, label: 'Task Detail' },
+      { key: '/tasks', icon: <UnorderedListOutlined />, label: 'Tasks' },
       {
         key: '/query-logs/66666666-6666-6666-6666-666666666666',
         icon: <FileSearchOutlined />,
@@ -34,14 +34,19 @@ export function AppLayout() {
     ];
 
     if (isAdmin(user?.roleCode)) {
-      base.splice(3, 0, { key: '/permissions', icon: <SafetyOutlined />, label: 'Permissions' });
+      base.splice(4, 0, { key: '/permissions', icon: <SafetyOutlined />, label: 'Permissions' });
     }
 
     return base;
   }, [user?.roleCode]);
 
   const selectedKey =
-    items.find((item) => location.pathname.startsWith(item.key.split('/:')[0]))?.key ?? '/documents';
+    items.find((item) => {
+      if (item.key === '/tasks') {
+        return location.pathname.startsWith('/tasks');
+      }
+      return location.pathname.startsWith(item.key.split('/:')[0]);
+    })?.key ?? '/documents';
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -68,7 +73,7 @@ export function AppLayout() {
                 Separated Frontend Admin
               </Typography.Title>
               <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.85)', margin: '8px 0 0' }}>
-                Phase 3 adds stable local integration, task inspection, query-log traceability, and tighter document action flows.
+                Phase 4 adds task center workflows, batch-import follow-up, and tighter operational handoff between admin pages.
               </Typography.Paragraph>
             </div>
             <Space size="middle">

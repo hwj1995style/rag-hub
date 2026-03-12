@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$MySqlContainer = "kb-mysql",
     [string]$Database = "kb",
     [string]$User = "kb_user",
@@ -11,9 +11,9 @@
 )
 
 $ErrorActionPreference = "Stop"
-$repoRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $PSScriptRoot)
 $dockerExe = "C:\Program Files\Docker\Docker\resources\bin\docker.exe"
-$searchInitScript = Join-Path $repoRoot "scripts\init_search_stack.ps1"
+$searchInitScript = Join-Path $repoRoot "scripts\legacy\init_search_stack.ps1"
 $workerDir = Join-Path $repoRoot "parser-worker"
 $documentId = "11111111-1111-1111-1111-111111111111"
 $taskId = "44444444-4444-4444-4444-444444444444"

@@ -1,53 +1,22 @@
-# Host Linux 部署脚本说明
+# Host Linux Deployment Assets
 
-## 1. 作用
+This directory stores the Host Linux deployment scripts and systemd units for `rag-hub`.
 
-本目录保存 Host Linux 直装部署使用的脚本，以及配套的 systemd unit 文件。
-
-## 2. 文件清单
-
-- `preflight_check.sh`
-- `install_runtime.sh`
+Main files:
 - `deploy_backend.sh`
 - `deploy_parser_worker.sh`
+- `deploy_frontend.sh`
 - `rollback_backend.sh`
 - `rollback_parser_worker.sh`
+- `rollback_frontend.sh`
 - `verify_deployment.sh`
-- `kb.env.template`
-- `systemd/rag-hub-backend.service`
-- `systemd/rag-hub-parser-worker.service`
+- `systemd/`
 
-## 3. 推荐使用顺序
+Primary references:
+- `../../README.md`
+- `../../docs/knowledge-base-deployment-host-linux.md`
 
-### 3.1 环境预检
-
-```bash
-bash deploy/linux/preflight_check.sh
-```
-
-### 3.2 安装运行时
-
-```bash
-sudo bash deploy/linux/install_runtime.sh
-```
-
-### 3.3 发布服务
-
-```bash
-sudo /app/kb/deploy/linux/deploy_backend.sh
-sudo /app/kb/deploy/linux/deploy_parser_worker.sh
-/app/kb/deploy/linux/verify_deployment.sh
-```
-
-### 3.4 回滚服务
-
-```bash
-sudo /app/kb/deploy/linux/rollback_backend.sh
-sudo /app/kb/deploy/linux/rollback_parser_worker.sh
-/app/kb/deploy/linux/verify_deployment.sh
-```
-
-## 4. 相关文档
-
-- `docs/knowledge-base-deployment-host-linux.md`
-- `docs/knowledge-base-ops-handbook.md`
+Use this directory when you need to:
+- deploy or rollback services on Host Linux
+- verify a Host Linux environment
+- inspect the packaged systemd units

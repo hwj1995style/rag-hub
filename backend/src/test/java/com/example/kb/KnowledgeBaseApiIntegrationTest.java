@@ -118,7 +118,39 @@ class KnowledgeBaseApiIntegrationTest {
                         .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.taskId", is("44444444-4444-4444-4444-444444444444")))
-                .andExpect(jsonPath("$.data.status", is("success")));
+                .andExpect(jsonPath("$.data.status", is("success")))
+                .andExpect(jsonPath("$.data.documentId", is("11111111-1111-1111-1111-111111111111")))
+                .andExpect(jsonPath("$.data.versionId", is("22222222-2222-2222-2222-222222222222")));
+    }
+
+    @Test
+    void shouldListTasks() throws Exception {
+        mockMvc.perform(get("/api/tasks")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(1)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].taskId", is("44444444-4444-4444-4444-444444444444")));
+    }
+
+    @Test
+    void shouldCreateBatchImportTask() throws Exception {
+        mockMvc.perform(post("/api/documents/batch-import")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "sourceType": "s3",
+                                  "sourceUri": "s3://bucket/policies",
+                                  "bizDomain": "risk",
+                                  "department": "RiskMgmt",
+                                  "securityLevel": "internal"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.accepted_count", is(1)))
+                .andExpect(jsonPath("$.data.task_count", is(1)))
+                .andExpect(jsonPath("$.data.task_ids", hasSize(1)));
     }
 
     @Test

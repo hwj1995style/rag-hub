@@ -71,7 +71,6 @@ export function DocumentsPage() {
       void message.success(`Batch import accepted. Batch ${data.batch_id}`);
       setBatchOpen(false);
       batchForm.resetFields();
-      void query.refetch();
     },
     onError: (error: Error) => {
       setBatchError(error.message);
@@ -131,7 +130,7 @@ export function DocumentsPage() {
         <Space wrap>
           <Link to={`/documents/${record.documentId}`}>Detail</Link>
           <Link to={`/documents/${record.documentId}/chunks`}>Chunks</Link>
-          <Link to="/tasks/44444444-4444-4444-4444-444444444444">Task view</Link>
+          <Link to={`/tasks?documentId=${record.documentId}`}>Related tasks</Link>
         </Space>
       ),
     },
@@ -182,6 +181,10 @@ export function DocumentsPage() {
                 <Typography.Text>accepted: {actionState.payload.accepted_count}</Typography.Text>
                 <Typography.Text>tasks: {actionState.payload.task_count}</Typography.Text>
                 <Typography.Text>source: {actionState.payload.source_uri}</Typography.Text>
+                <Link to="/tasks">Open task center</Link>
+                {actionState.payload.task_ids[0] && (
+                  <Link to={`/tasks/${actionState.payload.task_ids[0]}`}>Open task {actionState.payload.task_ids[0]}</Link>
+                )}
               </Space>
             )
           }
@@ -225,6 +228,7 @@ export function DocumentsPage() {
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
               Refresh
             </Button>
+            <Link to="/tasks">Open task center</Link>
             {isAdmin(roleCode) && (
               <>
                 <Button

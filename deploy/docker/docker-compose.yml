@@ -1,4 +1,4 @@
-﻿services:
+services:
   mysql:
     image: ${KB_MYSQL_IMAGE:-mysql:8.0}
     container_name: ${KB_MYSQL_CONTAINER:-kb-mysql}
@@ -76,7 +76,10 @@
       - kb-net
 
   rag-hub-backend:
-    image: ${KB_BACKEND_BASE_IMAGE:-eclipse-temurin:17-jre}
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.backend
+    image: ${KB_BACKEND_IMAGE:-rag-hub-backend:local}
     container_name: ${KB_BACKEND_CONTAINER:-rag-hub-backend}
     depends_on:
       mysql:
@@ -90,7 +93,6 @@
       qdrant:
         condition: service_started
     working_dir: /app
-    command: ["java", "-jar", "/app/app.jar"]
     environment:
       SPRING_PROFILES_ACTIVE: docker
       KB_DB_HOST: mysql
@@ -120,14 +122,21 @@
       KB_BOOTSTRAP_ADMIN_ROLE_CODE: ${KB_BOOTSTRAP_ADMIN_ROLE_CODE:-admin}
     ports:
       - '${KB_BACKEND_PORT_HOST:-8080}:8080'
-    volumes:
-      - ../../backend/target/rag-hub-backend-0.0.1-SNAPSHOT.jar:/app/app.jar
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/actuator/health | grep '\"status\":\"UP\"'"]
       interval: 10s
       timeout: 5s
       retries: 12
       start_period: 20s
+    networks:
+      - kb-net
+
+  rag-hub-frontend:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.frontend
+    image: ${KB_FRONTEND_IMAGE:-rag-hub-frontend:local}
+    container_name: ${KB_FRONTEND_CONTAINER:-rag-hub-frontend}
     networks:
       - kb-net
 
@@ -179,6 +188,8 @@
     depends_on:
       rag-hub-backend:
         condition: service_healthy
+      rag-hub-frontend:
+        condition: service_started
     ports:
       - '${KB_NGINX_PORT_HOST:-80}:80'
     volumes:

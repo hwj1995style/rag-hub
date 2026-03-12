@@ -4,4 +4,79 @@ import { App, Button, Card, Form, Input, Typography } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { login } from '../services/api/auth';
 import { useAuthStore } from '../stores/authStore';
-export function LoginPage() { const navigate = useNavigate(); const location = useLocation(); const { message } = App.useApp(); const setSession = useAuthStore((state) => state.setSession); const isAuthenticated = useAuthStore((state) => state.isAuthenticated); const mutation = useMutation({ mutationFn: login, onSuccess: (payload) => { setSession(payload); void message.success('Login succeeded'); const target = (location.state as { from?: string } | null)?.from || '/documents'; navigate(target, { replace: true }); }, onError: (error: Error) => { void message.error(error.message || 'Login failed'); } }); if (isAuthenticated) { navigate('/documents', { replace: true }); } return (<div className="auth-shell"><div className="auth-panel"><Card className="page-card" style={{ width: '100%', maxWidth: 420 }}><Typography.Title level={2} style={{ marginTop: 0 }}>Login to rag-hub</Typography.Title><Typography.Paragraph type="secondary">This page uses the existing JWT login API and forwards into the separated admin console.</Typography.Paragraph><Form layout="vertical" size="large" initialValues={{ username: 'tester', password: 'test123456' }} onFinish={(values) => mutation.mutate(values)}><Form.Item label="Username" name="username" rules={[{ required: true, message: 'Please input a username' }]}><Input prefix={<UserOutlined />} placeholder="tester" /></Form.Item><Form.Item label="Password" name="password" rules={[{ required: true, message: 'Please input a password' }]}><Input.Password prefix={<LockOutlined />} placeholder="Enter password" /></Form.Item><Button type="primary" htmlType="submit" block loading={mutation.isPending}>Login</Button></Form></Card></div><div className="auth-hero"><div><Typography.Title style={{ color: '#fff', fontSize: 48, lineHeight: 1.1, marginTop: 0 }}>RAG Hub Frontend</Typography.Title><Typography.Paragraph style={{ color: 'rgba(255,255,255,0.86)', fontSize: 18, maxWidth: 520 }}>The first iteration focuses on auth, document management, search, QA, and permission workflows so we can validate the current backend contract end to end.</Typography.Paragraph></div><div className="metric-grid"><div className="metric-card"><Typography.Text type="secondary">Admin seed</Typography.Text><Typography.Title level={4}>tester / test123456</Typography.Title></div><div className="metric-card"><Typography.Text type="secondary">Viewer seed</Typography.Text><Typography.Title level={4}>viewer / viewer123</Typography.Title></div></div></div></div>); }
+
+export function LoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { message } = App.useApp();
+  const setSession = useAuthStore((state) => state.setSession);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+
+  const mutation = useMutation({
+    mutationFn: login,
+    onSuccess: (payload) => {
+      setSession(payload);
+      void message.success('Login succeeded');
+      const target = (location.state as { from?: string } | null)?.from || '/documents';
+      navigate(target, { replace: true });
+    },
+    onError: (error: Error) => {
+      void message.error(error.message || 'Login failed');
+    },
+  });
+
+  if (isAuthenticated) {
+    navigate('/documents', { replace: true });
+  }
+
+  return (
+    <div className="auth-shell">
+      <div className="auth-panel">
+        <Card className="page-card" style={{ width: '100%', maxWidth: 420 }}>
+          <Typography.Title level={2} style={{ marginTop: 0 }}>
+            Login to rag-hub
+          </Typography.Title>
+          <Typography.Paragraph type="secondary">
+            This page uses the existing JWT login API and forwards into the separated admin console.
+          </Typography.Paragraph>
+          <Form
+            layout="vertical"
+            size="large"
+            initialValues={{ username: 'dockeradmin', password: 'DockerAdmin123!' }}
+            onFinish={(values) => mutation.mutate(values)}
+          >
+            <Form.Item label="Username" name="username" rules={[{ required: true, message: 'Please input a username' }]}>
+              <Input prefix={<UserOutlined />} placeholder="dockeradmin" />
+            </Form.Item>
+            <Form.Item label="Password" name="password" rules={[{ required: true, message: 'Please input a password' }]}>
+              <Input.Password prefix={<LockOutlined />} placeholder="Enter password" />
+            </Form.Item>
+            <Button type="primary" htmlType="submit" block loading={mutation.isPending}>
+              Login
+            </Button>
+          </Form>
+        </Card>
+      </div>
+      <div className="auth-hero">
+        <div>
+          <Typography.Title style={{ color: '#fff', fontSize: 48, lineHeight: 1.1, marginTop: 0 }}>
+            RAG Hub Frontend
+          </Typography.Title>
+          <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.86)', fontSize: 18, maxWidth: 520 }}>
+            The first iteration focuses on auth, document management, search, QA, and permission workflows so we can validate the current backend contract end to end.
+          </Typography.Paragraph>
+        </div>
+        <div className="metric-grid">
+          <div className="metric-card">
+            <Typography.Text type="secondary">Admin seed</Typography.Text>
+            <Typography.Title level={4}>dockeradmin / DockerAdmin123!</Typography.Title>
+          </div>
+          <div className="metric-card">
+            <Typography.Text type="secondary">Viewer seed</Typography.Text>
+            <Typography.Title level={4}>viewer / viewer123</Typography.Title>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,5 +1,8 @@
 package com.example.kb.service.impl;
 
+import com.example.kb.dto.response.PageResponse;
+import com.example.kb.dto.response.TaskResponse;
+import com.example.kb.entity.KbIngestTask;
 import com.example.kb.entity.KbQueryLog;
 import com.example.kb.exception.NotFoundException;
 import com.example.kb.repository.KbIngestTaskRepository;
@@ -11,6 +14,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -27,19 +33,32 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public com.example.kb.dto.response.TaskResponse getTask(String taskId) {
-        com.example.kb.entity.KbIngestTask task = taskRepository.findById(UUID.fromString(taskId))
+    public PageResponse<TaskResponse> listTasks(String status, String taskType, String documentId, Integer pageNo, Integer pageSize) {
+        int currentPage = pageNo == null ? 1 : pageNo;
+        int currentSize = pageSize == null ? 20 : pageSize;
+        Specification<KbIngestTask> spec = Specification.where(null);
+        if (status != null && !status.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+        }
+        if (taskType != null && !taskType.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("taskType"), taskType));
+        }
+        if (documentId != null && !documentId.isBlank()) {
+            UUID docId = UUID.fromString(documentId);
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("documentId"), docId));
+        }
+        var page = taskRepository.findAll(
+                spec,
+                PageRequest.of(Math.max(currentPage - 1, 0), currentSize, Sort.by(Sort.Direction.DESC, "createdAt")));
+        List<TaskResponse> items = page.getContent().stream().map(this::toTaskResponse).toList();
+        return new PageResponse<>(page.getTotalElements(), currentPage, currentSize, items);
+    }
+
+    @Override
+    public TaskResponse getTask(String taskId) {
+        KbIngestTask task = taskRepository.findById(UUID.fromString(taskId))
                 .orElseThrow(() -> new NotFoundException("task not found"));
-        return new com.example.kb.dto.response.TaskResponse(
-                task.getId().toString(),
-                task.getTaskType(),
-                task.getStatus(),
-                task.getStep(),
-                task.getRetryCount(),
-                task.getErrorMessage(),
-                task.getStartedAt() == null ? null : task.getStartedAt().toString(),
-                task.getFinishedAt() == null ? null : task.getFinishedAt().toString()
-        );
+        return toTaskResponse(task);
     }
 
     @Override
@@ -86,5 +105,22 @@ public class TaskServiceImpl implements TaskService {
 
     private String value(String raw) {
         return raw == null ? "" : raw;
+    }
+
+    private TaskResponse toTaskResponse(KbIngestTask task) {
+        return new TaskResponse(
+                task.getId().toString(),
+                task.getTaskType(),
+                value(task.getSourceUri()),
+                task.getDocumentId() == null ? "" : task.getDocumentId().toString(),
+                task.getVersionId() == null ? "" : task.getVersionId().toString(),
+                task.getStatus(),
+                value(task.getStep()),
+                task.getRetryCount(),
+                task.getErrorMessage(),
+                task.getCreatedAt() == null ? null : task.getCreatedAt().toString(),
+                task.getStartedAt() == null ? null : task.getStartedAt().toString(),
+                task.getFinishedAt() == null ? null : task.getFinishedAt().toString()
+        );
     }
 }

@@ -61,15 +61,22 @@ jobs:
         shell: pwsh
         run: |
           $paths = @(
-            "scripts/init_backend_env.ps1",
             "scripts/test_backend.ps1",
             "scripts/package_backend.ps1",
+            "scripts/package_frontend.ps1",
             "scripts/test_parser_worker.ps1",
             "scripts/package_parser_worker.ps1",
-            "scripts/reindex_sample_data.ps1",
-            "scripts/api_smoke_test.ps1",
-            "scripts/api_assert_test.ps1",
-            "deploy/linux/verify_deployment.sh"
+            "scripts/redeploy_backend_docker.ps1",
+            "scripts/redeploy_frontend_docker.ps1",
+            "scripts/redeploy_dev_stack.ps1",
+            "scripts/status_dev_stack.ps1",
+            "scripts/bootstrap_playwright_wsl.sh",
+            "scripts/run_playwright_wsl.sh",
+            "scripts/run_playwright_wsl_host.sh",
+            "deploy/linux/deploy_frontend.sh",
+            "deploy/linux/rollback_frontend.sh",
+            "deploy/linux/verify_deployment.sh",
+            "deploy/docker/Dockerfile.frontend"
           )
 
           foreach ($path in $paths) {

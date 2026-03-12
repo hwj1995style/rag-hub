@@ -49,11 +49,11 @@ export function TaskDetailPage() {
               Task Detail
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              Inspect ingest or reparse tasks, refresh their state, and jump here directly from document actions.
+              Inspect ingest, batch-import, or reparse tasks, then jump back to the owning document when one exists.
             </Typography.Paragraph>
           </div>
           <Space>
-            <Link to="/documents">Back to documents</Link>
+            <Link to="/tasks">Back to task center</Link>
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
               Refresh
             </Button>
@@ -99,6 +99,12 @@ export function TaskDetailPage() {
             <Descriptions.Item label="Status">{statusTag}</Descriptions.Item>
             <Descriptions.Item label="Current step">{query.data.step || '-'}</Descriptions.Item>
             <Descriptions.Item label="Retry count">{query.data.retryCount}</Descriptions.Item>
+            <Descriptions.Item label="Source URI">{query.data.sourceUri || '-'}</Descriptions.Item>
+            <Descriptions.Item label="Document">
+              {query.data.documentId ? <Link to={`/documents/${query.data.documentId}`}>{query.data.documentId}</Link> : '-'}
+            </Descriptions.Item>
+            <Descriptions.Item label="Version ID">{query.data.versionId || '-'}</Descriptions.Item>
+            <Descriptions.Item label="Created at">{formatDateTime(query.data.createdAt)}</Descriptions.Item>
             <Descriptions.Item label="Started at">{formatDateTime(query.data.startedAt)}</Descriptions.Item>
             <Descriptions.Item label="Finished at">{formatDateTime(query.data.finishedAt)}</Descriptions.Item>
             <Descriptions.Item label="Error message">{query.data.errorMessage || '-'}</Descriptions.Item>

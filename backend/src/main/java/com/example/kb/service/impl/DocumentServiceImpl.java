@@ -107,12 +107,31 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
+    @Transactional
     public Object batchImport(BatchImportRequest request) {
+        String sourceUri = request.sourceUri() == null ? "" : request.sourceUri().trim();
+        if (sourceUri.isBlank()) {
+            throw new IllegalArgumentException("source_uri must not be blank");
+        }
+
+        String normalizedSourceType = request.sourceType() == null || request.sourceType().isBlank()
+                ? "batch_import"
+                : request.sourceType().trim().toLowerCase();
+
+        KbIngestTask task = new KbIngestTask();
+        task.setTaskType("batch_import");
+        task.setSourceUri(sourceUri);
+        task.setStatus("pending");
+        task.setStep("queued");
+        taskRepository.save(task);
+
         return Map.of(
                 "batch_id", UUID.randomUUID().toString(),
-                "task_count", 0,
-                "accepted_count", 0,
-                "source_uri", request.sourceUri()
+                "task_count", 1,
+                "accepted_count", 1,
+                "source_uri", sourceUri,
+                "source_type", normalizedSourceType,
+                "task_ids", List.of(task.getId().toString())
         );
     }
 
@@ -257,8 +276,17 @@ public class DocumentServiceImpl implements DocumentService {
 
     private TaskResponse toTaskResponse(KbIngestTask task) {
         return new TaskResponse(
-                task.getId().toString(), task.getTaskType(), task.getStatus(), task.getStep(), task.getRetryCount(),
-                task.getErrorMessage(), task.getStartedAt() == null ? null : task.getStartedAt().toString(),
+                task.getId().toString(),
+                task.getTaskType(),
+                nullToEmpty(task.getSourceUri()),
+                task.getDocumentId() == null ? "" : task.getDocumentId().toString(),
+                task.getVersionId() == null ? "" : task.getVersionId().toString(),
+                task.getStatus(),
+                nullToEmpty(task.getStep()),
+                task.getRetryCount(),
+                task.getErrorMessage(),
+                task.getCreatedAt() == null ? null : task.getCreatedAt().toString(),
+                task.getStartedAt() == null ? null : task.getStartedAt().toString(),
                 task.getFinishedAt() == null ? null : task.getFinishedAt().toString());
     }
 
