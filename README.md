@@ -1,22 +1,22 @@
 # rag-hub
 
-rag-hub is a RAG operations platform for document ingestion, search, QA, permission governance, and task operations.
+rag-hub 是一个面向文档接入、检索问答、权限治理和任务运营的 RAG 运维平台。
 
-The repository now uses these deployment rules:
-- Frontend deployment targets: Docker and Host Linux only
-- Backend deployment targets: Docker and Host Linux only
-- WSL is kept for tooling only, mainly frontend packaging and Playwright regression runs
+当前仓库采用以下部署原则：
+- 前端部署方式只保留 Docker 和 Host Linux
+- 后端部署方式只保留 Docker 和 Host Linux
+- WSL 仅保留给工具链使用，主要承担前端打包和 Playwright 回归
 
-## Main directories
+## 目录说明
 
-- `backend/`: Spring Boot backend API
-- `frontend/`: React admin console
-- `parser-worker/`: parsing and indexing worker
-- `deploy/`: Docker and Host Linux deployment assets
-- `scripts/`: packaging, redeploy, smoke-test, and Playwright helpers
-- `docs/`: design, development, test, and deployment documents
+- `backend/`：Spring Boot 后端 API
+- `frontend/`：React 管理控制台
+- `parser-worker/`：解析与索引 worker
+- `deploy/`：Docker 与 Host Linux 部署资产
+- `scripts/`：打包、重发、健康检查、Playwright 等辅助脚本
+- `docs/`：设计、开发、测试、部署文档
 
-## Key documents
+## 关键文档
 
 - `docs/frontend-architecture.md`
 - `docs/frontend-development-guide.md`
@@ -29,9 +29,9 @@ The repository now uses these deployment rules:
 - `docs/knowledge-base-batch-import-followup-design.md`
 - `docs/knowledge-base-test-cases.md`
 
-## Frontend status
+## 前端当前能力
 
-Current frontend stack:
+技术栈：
 - React
 - TypeScript
 - Vite
@@ -40,112 +40,111 @@ Current frontend stack:
 - Zustand
 - Ant Design
 
-Current pages:
-- Login
-- Documents
-- Document detail
-- Chunk browser
-- Search workbench
-- QA workbench
-- Permission binding governance
-- Task center
-- Task detail
-- Query logs and detail
+当前页面：
+- 登录页
+- 文档列表
+- 文档详情
+- Chunk 浏览页
+- 搜索工作台
+- 问答工作台
+- 权限治理页
+- 任务中心
+- 任务详情页
+- 查询日志列表与详情页
 
-## Fixed local release workflow
+## 固定本地发版流程
 
-Use these scripts after code changes.
+代码改动后，统一按脚本重发，避免手工尝试。
 
-Backend only:
+仅后端改动：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/redeploy_backend_docker.ps1
 ```
 
-Frontend only:
+仅前端改动：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/redeploy_frontend_docker.ps1
 ```
 
-Frontend and backend together:
+前后端一起改动：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/redeploy_dev_stack.ps1
 ```
 
-Check stack status:
+查看整套状态：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/status_dev_stack.ps1
 ```
 
-## Docker deployment
+## Docker 联调模式
 
-Primary local integration mode:
-- Docker frontend
-- Docker backend
-- Docker middleware components
-- WSL Playwright
+当前主联调模式为：
+- Docker 前端
+- Docker 后端
+- Docker 中间件依赖
+- WSL Playwright 回归
 
-Start the stack:
+启动整套环境：
 ```powershell
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env.example up -d
 ```
 
-Public endpoints:
-- Frontend: `http://127.0.0.1/`
-- Backend health: `http://127.0.0.1:8080/actuator/health`
-- Unified nginx entry: `http://127.0.0.1/`
+访问入口：
+- 前端：`http://127.0.0.1/`
+- 后端健康检查：`http://127.0.0.1:8080/actuator/health`
+- Nginx 统一入口：`http://127.0.0.1/`
 
-## Host Linux deployment
+## Host Linux 部署模式
 
-Host Linux now includes frontend deployment assets as well:
+Host Linux 现在也包含前端发布资产：
 - `scripts/package_frontend.ps1`
 - `deploy/linux/deploy_frontend.sh`
 - `deploy/linux/rollback_frontend.sh`
 - `deploy/nginx/kb.conf`
 
-Frontend static files are published to `/app/kb/frontend/current` and served by host nginx.
+前端静态产物默认发布到 `/app/kb/frontend/current`，由宿主机 Nginx 提供服务。
 
-## WSL Playwright workflow
+## WSL Playwright 回归
 
-WSL is no longer used to deploy the frontend.
-It is still used to:
-- keep a Linux Node 24 toolchain
-- build frontend artifacts when needed
-- run Playwright against Docker or Host Linux deployments
+WSL 不再负责前端部署，但仍用于：
+- 维护 Linux Node 24 工具链
+- 在需要时打包前端产物
+- 对 Docker 或 Host Linux 部署执行 Playwright 回归
 
-Bootstrap WSL Node 24:
+初始化 WSL Node 24：
 ```powershell
 wsl -d Ubuntu -- bash /mnt/d/Projects/rag-hub/scripts/bootstrap_playwright_wsl.sh
 ```
 
-Run Playwright against the Docker deployed frontend:
+对 Docker 部署前端执行回归：
 ```powershell
 wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwright_wsl.sh'
 ```
 
-Run Playwright against a Host Linux deployment:
+对 Host Linux 部署执行回归：
 ```powershell
 wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && HOST_BASE_URL=http://<host-linux-ip> bash scripts/run_playwright_wsl_host.sh'
 ```
 
-## Verified regression coverage
+## 已验证回归范围
 
-The current WSL Playwright suite covers:
-- login
-- documents and document detail
-- search
-- QA
-- task center and task detail
-- batch-import same-source follow-up
-- query logs and detail
-- upload
-- batch import
-- reparse
-- activate
-- permission governance (load, bind, delete single policy)
-- failure states for upload/search/QA/permission binding
-- missing task and missing query log states
+当前 WSL Playwright 覆盖：
+- 登录
+- 文档列表与文档详情
+- 搜索
+- 问答
+- 任务中心与任务详情
+- 批量导入同来源跟进
+- 查询日志列表与详情
+- 上传
+- 批量导入
+- 重解析
+- 版本激活
+- 权限治理（加载、绑定、删除单条策略、按主体查询）
+- 上传 / 搜索 / QA / 权限绑定等失败提示
+- 缺失任务与缺失查询日志提示
 - viewer 403
-- invalid token 401 redirect
+- 无效 token 401 跳登录
 
-Latest verified result:
-- `25 passed`
+最新验证结果：
+- `31 passed`

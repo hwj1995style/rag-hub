@@ -1,42 +1,64 @@
-# Test Cases
+# 测试与联调清单
 
-## Current automated regression baseline
+## 当前主联调模式
 
-Primary regression mode:
+当前主联调模式为：
+- Docker 前端
+- Docker 后端
+- Docker 中间件依赖
 - WSL Playwright
-- Docker deployed frontend
-- Docker deployed backend
-- Docker middleware stack
 
-Run command:
-```powershell
-wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwright_wsl.sh'
-```
+## 已覆盖的核心链路
 
-Latest verified result:
-- `29 passed`
+### 认证与基础访问
+- admin 登录
+- viewer 登录
+- 无效 token 401 跳登录
+- viewer 访问 admin 页面返回 403
 
-## Covered flows
+### 文档与检索问答
+- 文档列表
+- 文档详情
+- Chunk 预览与浏览
+- 搜索结果
+- 问答结果与 citations
+- 查询日志列表与详情
 
-- login
-- documents and document detail
-- search
-- QA
-- task center and task detail
-- batch-import same-source follow-up
-- query logs and detail
-- upload
-- batch import
-- reparse
-- activate
-- permission governance (bind, load list, delete single policy)
-- inline failure states for search, QA, upload, and permission binding
-- missing task and missing query log errors
-- viewer 403
-- invalid token 401 redirect
+### 文档管理动作
+- 上传
+- 批量导入
+- 重解析
+- 版本激活
+- 批量导入同来源任务跟进
 
-## Remaining gaps
+### 权限治理
+- 权限整批绑定
+- 权限列表加载
+- 删除单条策略
+- 按资源视角查询
+- 按主体视角查询
+- 文档详情跳转到权限治理页
 
-- Host Linux real-machine regression run
-- dependency outage UX beyond mocked API failures
-- resource-level authorization after backend implementation
+### 异常链路
+- 上传失败提示
+- 搜索失败提示
+- QA 失败提示
+- 权限绑定失败提示
+- 缺失任务提示
+- 缺失查询日志提示
+- viewer 无权限查看受限文档
+- viewer 搜索与 QA 结果被权限过滤
+
+## 当前验证结果
+
+最新已验证结果：
+- 后端 Maven 测试通过
+- WSL Playwright 全量通过：`31 passed`
+
+## 尚未深入覆盖的方向
+
+仍建议后续继续补充：
+- MinIO / Elasticsearch / Qdrant 真实故障时的前端体验
+- Host Linux 实机回归
+- 更细粒度的权限可观测性测试
+- 更复杂的批量导入失败场景

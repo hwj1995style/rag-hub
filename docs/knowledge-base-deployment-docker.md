@@ -1,10 +1,10 @@
-# Docker Deployment Guide
+# Docker 部署指南
 
-## Scope
+## 适用范围
 
-This guide describes the Docker deployment mode for `rag-hub`.
+本文档说明 `rag-hub` 的 Docker 部署方式。
 
-The Docker stack now includes:
+当前 Docker 栈包括：
 - MySQL
 - Redis
 - MinIO
@@ -13,87 +13,89 @@ The Docker stack now includes:
 - `rag-hub-backend`
 - `rag-hub-frontend`
 - `rag-hub-parser-worker`
-- public `nginx`
+- 对外 `nginx`
 
-## Quick start
+## 快速开始
 
-Copy the environment file:
+复制环境文件：
 ```bash
 cp deploy/docker/.env.example deploy/docker/.env
 ```
 
-Start the stack:
+启动整套环境：
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env up -d
 ```
 
-Check status:
+查看状态：
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env ps
 ```
 
-Stop the stack:
+停止环境：
 ```bash
 docker compose -f deploy/docker/docker-compose.yml --env-file deploy/docker/.env down
 ```
 
-## Public endpoints
+## 对外入口
 
-- Frontend: `http://127.0.0.1/`
-- Backend health: `http://127.0.0.1:8080/actuator/health`
-- API through nginx: `http://127.0.0.1/api/...`
+- 前端：`http://127.0.0.1/`
+- 后端健康检查：`http://127.0.0.1:8080/actuator/health`
+- 经过 nginx 的 API：`http://127.0.0.1/api/...`
 
-## Fixed local release commands
+## 固定本地发版命令
 
-Backend only:
+仅后端：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/redeploy_backend_docker.ps1
 ```
 
-Frontend only:
+仅前端：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/redeploy_frontend_docker.ps1
 ```
 
-Frontend and backend together:
+前后端一起：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/redeploy_dev_stack.ps1
 ```
 
-Status:
+查看状态：
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/status_dev_stack.ps1
 ```
 
-## Frontend container model
+## 前端容器模型
 
-The frontend Docker image is built from:
+前端镜像由以下文件构建：
 - `deploy/docker/Dockerfile.frontend`
 - `deploy/docker/frontend-site.conf`
 
-The public nginx container proxies:
-- `/api/*` to `rag-hub-backend`
-- `/actuator/health` to `rag-hub-backend`
-- `/` to `rag-hub-frontend`
+对外 nginx 容器负责：
+- `/api/*` -> `rag-hub-backend`
+- `/actuator/health` -> `rag-hub-backend`
+- `/` -> `rag-hub-frontend`
 
-## Storage mode
+## 存储模式
 
-Docker uses MinIO by default:
+Docker 环境默认走 MinIO：
 ```env
 KB_STORAGE_MODE=minio
 KB_STORAGE_BUCKET=kb-uploads
 ```
 
-Validated Docker storage loop:
+当前已经验证通过的存储闭环：
 - `upload -> ingest success`
 - `reparse -> success`
 - `activate -> success`
 - `frontend -> nginx -> backend` success
 
-## Verification
+## 验证方式
 
-The current Docker deployment path has been verified with:
-- public frontend `http://127.0.0.1/`
-- backend health `http://127.0.0.1:8080/actuator/health`
-- WSL Playwright against the Docker deployed frontend
-- latest result: `20 passed`
+当前 Docker 部署链路已用这些方式验证：
+- 公网前端入口 `http://127.0.0.1/`
+- 后端健康检查 `http://127.0.0.1:8080/actuator/health`
+- WSL Playwright 对 Docker 部署前端执行回归
+
+最新验证结果：
+- `31 passed`
