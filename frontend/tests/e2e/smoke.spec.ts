@@ -21,6 +21,24 @@ test.describe('rag-hub core regression', () => {
     await expect.poll(() => page.evaluate(() => document.body.innerText.includes('\u767b\u5f55 rag-hub'))).toBeTruthy();
   });
 
+  test('chinese locale renders menu and qa page labels without question marks', async ({ page }) => {
+    await page.goto('/login');
+    await page.locator('.ant-segmented').first().locator('.ant-segmented-item').nth(1).click();
+    await expect(page.getByRole('heading', { name: '\u767b\u5f55 rag-hub' })).toBeVisible();
+    await page.getByLabel('\u7528\u6237\u540d').fill('dockeradmin');
+    await page.getByLabel('\u5bc6\u7801').fill('DockerAdmin123!');
+    await page.locator('button[type="submit"]').click();
+    await expect(page).toHaveURL(/\/documents$/);
+
+    await expect(page.getByRole('menu')).toContainText('\u95ee\u7b54');
+    await expect(page.getByRole('menu')).toContainText('\u6587\u6863');
+
+    await page.goto('/qa');
+    await expect(page.getByRole('heading', { name: 'QA \u5de5\u4f5c\u53f0' })).toBeVisible();
+    await expect(page.getByText('\u63d0\u95ee')).toBeVisible();
+    await expect(page.getByRole('menu')).not.toContainText(/\?{2,}/);
+  });
+
   test('admin can log in and browse documents', async ({ page }) => {
     await login(page);
 

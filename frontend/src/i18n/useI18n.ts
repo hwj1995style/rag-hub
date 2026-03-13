@@ -14,8 +14,12 @@ function interpolate(template: string, vars?: Record<string, string | number>) {
 }
 
 export function resolveMessage(locale: AppLocale, key: string, vars?: Record<string, string | number>) {
-  const current = messages[locale][key] ?? messages.en[key] ?? key;
-  return interpolate(current, vars);
+  const current = messages[locale][key];
+  const isCorrupted =
+    typeof current === 'string' &&
+    (/^[?]+$/.test(current) || /\?{2,}/.test(current) || current.includes('\ufffd'));
+  const resolved = !current || isCorrupted ? messages.en[key] ?? key : current;
+  return interpolate(resolved, vars);
 }
 
 export function useI18n() {
