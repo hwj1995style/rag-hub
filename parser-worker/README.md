@@ -1,49 +1,49 @@
 # rag-hub Parser Worker
 
-## Purpose
+## 作用
 
-`parser-worker` is the Python ingestion and indexing worker for `rag-hub`.
+`parser-worker` 是 `rag-hub` 的 Python 解析与索引 worker。
 
-It is responsible for:
-- polling pending ingest and reparse tasks from MySQL
-- downloading source files from MinIO or local fallback storage
-- parsing source content into chunks
-- writing chunk metadata into MySQL
-- writing full-text content into Elasticsearch
-- writing vectors into Qdrant
-- updating task, parse, and index status
+当前主要负责：
+- 从 MySQL 轮询待处理的 ingest / reparse 任务
+- 从 MinIO 或本地兜底存储下载源文件
+- 将源内容解析成 chunks
+- 将 chunk 元数据写回 MySQL
+- 将全文写入 Elasticsearch
+- 将向量写入 Qdrant
+- 更新任务、解析和索引状态
 
-## Deployment modes
+## 部署模式
 
-Supported modes:
+当前支持：
 - Docker
 - Host Linux
 
-## Primary scripts
+## 常用脚本
 
 - `../scripts/test_parser_worker.ps1`
 - `../scripts/package_parser_worker.ps1`
 
-## Recommended workflow
+## 推荐流程
 
-### Docker mode
+### Docker 模式
 
 ```powershell
 docker compose -f ../deploy/docker/docker-compose.yml --env-file ../deploy/docker/.env.example up -d rag-hub-parser-worker
 ```
 
-### Host Linux mode
+### Host Linux 模式
 
-Follow:
+请参考：
 - `../docs/knowledge-base-deployment-host-linux.md`
 
-## Tests
+## 测试
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ../scripts/test_parser_worker.ps1
 ```
 
-## Packaging
+## 打包
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ../scripts/package_parser_worker.ps1
@@ -51,5 +51,5 @@ powershell -ExecutionPolicy Bypass -File ../scripts/package_parser_worker.ps1
 
 ## CI
 
-CI definition:
+CI 定义文件：
 - `../.github/workflows/ci.yml`

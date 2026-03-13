@@ -1,73 +1,73 @@
 # rag-hub Backend
 
-## Purpose
+## 作用
 
-The backend is the Spring Boot API service for `rag-hub`.
+backend 是 `rag-hub` 的 Spring Boot API 服务。
 
-It currently owns:
-- document management APIs
-- search APIs
-- QA APIs
-- task APIs
-- query log APIs
-- permission binding APIs
-- JWT authentication and role-based authorization
+当前主要负责：
+- 文档管理接口
+- 搜索接口
+- 问答接口
+- 任务接口
+- 查询日志接口
+- 权限治理接口
+- JWT 认证与角色鉴权
 
-## Runtime modes
+## 运行模式
 
-Supported deployment modes:
+当前支持的部署模式：
 - Docker
 - Host Linux
 
-The repository no longer treats direct Windows host backend startup as a supported runtime mode.
+仓库已不再把 Windows 宿主机直接启动 backend 视为正式运行模式。
 
-## Local tooling
+## 本地工具链
 
-Bundled local tools:
+仓库内置工具：
 - `../tools/jdk-17.0.14+7`
 - `../tools/apache-maven-3.9.13`
 
-Primary scripts:
+常用脚本：
 - `../scripts/test_backend.ps1`
 - `../scripts/package_backend.ps1`
 - `../scripts/redeploy_backend_docker.ps1`
 - `../scripts/status_dev_stack.ps1`
 
-## Recommended workflow
+## 推荐流程
 
-### Docker mode
+### Docker 模式
 
-Redeploy backend only:
+仅重发后端：
 ```powershell
 powershell -ExecutionPolicy Bypass -File ../scripts/redeploy_backend_docker.ps1
 ```
 
-Check stack status:
+查看整套状态：
 ```powershell
 powershell -ExecutionPolicy Bypass -File ../scripts/status_dev_stack.ps1
 ```
 
-### Host Linux mode
+### Host Linux 模式
 
-Follow:
+请参考：
 - `../docs/knowledge-base-deployment-host-linux.md`
 
-Then verify with:
+部署后可用以下命令验收：
 ```bash
 /app/kb/deploy/linux/verify_deployment.sh
 ```
 
-## Tests
+## 测试
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File ../scripts/test_backend.ps1 -Clean -MavenGoal test
 ```
 
-## Health endpoint
+## 健康检查
 
 - `GET /actuator/health`
 
 ## CI
 
-CI definition:
+CI 定义文件：
 - `../.github/workflows/ci.yml`

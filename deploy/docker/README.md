@@ -1,8 +1,8 @@
-# Docker Deployment Assets
+# Docker 部署资产目录
 
-This directory stores the Docker deployment assets for `rag-hub`.
+本目录存放 `rag-hub` 的 Docker 部署资产。
 
-Main files:
+主要文件：
 - `docker-compose.yml`
 - `.env.example`
 - `Dockerfile.backend`
@@ -10,11 +10,11 @@ Main files:
 - `frontend-site.conf`
 - `nginx.conf`
 
-Primary references:
+主参考文档：
 - `../../README.md`
 - `../../docs/knowledge-base-deployment-docker.md`
 
-Use this directory when you need to:
-- start the Docker stack
-- rebuild frontend/backend Docker images
-- inspect the public nginx routing layer
+适用场景：
+- 启动 Docker 整套环境
+- 重建前端或后端镜像
+- 排查对外 nginx 路由层

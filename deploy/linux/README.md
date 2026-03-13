@@ -1,8 +1,8 @@
-# Host Linux Deployment Assets
+# Host Linux 部署资产目录
 
-This directory stores the Host Linux deployment scripts and systemd units for `rag-hub`.
+本目录存放 `rag-hub` 的 Host Linux 部署脚本和 systemd 资产。
 
-Main files:
+主要文件：
 - `deploy_backend.sh`
 - `deploy_parser_worker.sh`
 - `deploy_frontend.sh`
@@ -12,11 +12,11 @@ Main files:
 - `verify_deployment.sh`
 - `systemd/`
 
-Primary references:
+主参考文档：
 - `../../README.md`
 - `../../docs/knowledge-base-deployment-host-linux.md`
 
-Use this directory when you need to:
-- deploy or rollback services on Host Linux
-- verify a Host Linux environment
-- inspect the packaged systemd units
+适用场景：
+- 在 Host Linux 上部署或回滚服务
+- 验证 Host Linux 环境
+- 检查打包后的 systemd unit
