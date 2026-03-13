@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
 import { CheckCircleOutlined, CopyOutlined, PartitionOutlined, ReloadOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import {
@@ -18,6 +18,7 @@ import {
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 import { getDocument, getDocumentChunks, reparseDocument, activateDocumentVersion } from '../services/api/documents';
 import { useAuthStore } from '../stores/authStore';
 import type { ChunkItem, TaskResponse } from '../types/api';
@@ -29,15 +30,24 @@ type ActivateResult = {
   status: string;
 };
 
-function hasCurrentVersion(
-  value: Record<string, unknown> | { version_id: string; version_no: string; parse_status: string; index_status: string; effective_from: string; effective_to: string; is_current: boolean },
-): value is { version_id: string; version_no: string; parse_status: string; index_status: string; effective_from: string; effective_to: string; is_current: boolean } {
+type CurrentVersion = {
+  version_id: string;
+  version_no: string;
+  parse_status: string;
+  index_status: string;
+  effective_from: string;
+  effective_to: string;
+  is_current: boolean;
+};
+
+function hasCurrentVersion(value: Record<string, unknown> | CurrentVersion): value is CurrentVersion {
   return 'version_id' in value;
 }
 
 export function DocumentDetailPage() {
   const { documentId = '' } = useParams();
   const { message } = App.useApp();
+  const { t } = useI18n();
   const roleCode = useAuthStore((state) => state.user?.roleCode);
   const [reparseForm] = Form.useForm();
   const [activateForm] = Form.useForm();
@@ -60,7 +70,7 @@ export function DocumentDetailPage() {
     mutationFn: (payload: { forceReindex?: boolean; reason?: string }) => reparseDocument(documentId, payload),
     onSuccess: (data) => {
       setReparseResult(data);
-      void message.success(`Reparse task created: ${data.taskId}`);
+      void message.success(`${t('documentDetail.reparseCreated')}: ${data.taskId}`);
     },
     onError: (error: Error) => void message.error(error.message),
   });
@@ -69,7 +79,7 @@ export function DocumentDetailPage() {
     mutationFn: (values: { versionId: string; effectiveFrom?: string; remark?: string }) => activateDocumentVersion(documentId, values.versionId, values),
     onSuccess: (data) => {
       setActivateResult(data);
-      void message.success('Version activated');
+      void message.success(t('documentDetail.activationSubmitted'));
       void detailQuery.refetch();
     },
     onError: (error: Error) => void message.error(error.message),
@@ -82,11 +92,11 @@ export function DocumentDetailPage() {
     documentId === '11111111-1111-1111-1111-111111111111' ? '22222222-2222-2222-2222-222222222223' : '';
 
   const chunkColumns = [
-    { title: 'No', dataIndex: 'chunkNo', key: 'chunkNo', width: 80 },
-    { title: 'Title Path', dataIndex: 'titlePath', key: 'titlePath' },
-    { title: 'Locator', dataIndex: 'locator', key: 'locator', width: 120 },
+    { title: t('common.chunkNo'), dataIndex: 'chunkNo', key: 'chunkNo', width: 80 },
+    { title: t('common.titlePath'), dataIndex: 'titlePath', key: 'titlePath' },
+    { title: t('common.locator'), dataIndex: 'locator', key: 'locator', width: 120 },
     {
-      title: 'Summary',
+      title: t('common.summary'),
       dataIndex: 'contentSummary',
       key: 'contentSummary',
       render: (_: unknown, record: ChunkItem) => record.contentSummary || record.contentText,
@@ -102,21 +112,21 @@ export function DocumentDetailPage() {
         <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
           <div>
             <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 4 }}>
-              Document Detail
+              {t('documentDetail.title')}
             </Typography.Title>
             <Typography.Text type="secondary">{documentId}</Typography.Text>
           </div>
           <Space>
             {isAdmin(roleCode) && (
               <Link to={`/permissions?resourceType=document&resourceId=${documentId}`}>
-                <Button>Manage permissions</Button>
+                <Button>{t('documentDetail.managePermissions')}</Button>
               </Link>
             )}
             <Link to={`/documents/${documentId}/chunks`}>
-              <Button icon={<PartitionOutlined />}>All chunks</Button>
+              <Button icon={<PartitionOutlined />}>{t('documentDetail.allChunks')}</Button>
             </Link>
             <Button icon={<ReloadOutlined />} onClick={() => { void detailQuery.refetch(); void chunkQuery.refetch(); }}>
-              Refresh
+              {t('common.refresh')}
             </Button>
           </Space>
         </Space>
@@ -126,7 +136,7 @@ export function DocumentDetailPage() {
         <Alert
           type="error"
           showIcon
-          message="Failed to load document"
+          message={t('documentDetail.loadFailed')}
           description={detailError}
         />
       )}
@@ -135,7 +145,7 @@ export function DocumentDetailPage() {
         <Alert
           type="warning"
           showIcon
-          message="Chunk preview is unavailable"
+          message={t('documentDetail.chunkPreviewUnavailable')}
           description={chunkError}
         />
       )}
@@ -146,8 +156,8 @@ export function DocumentDetailPage() {
           showIcon
           closable
           onClose={() => setReparseResult(null)}
-          message="Reparse task created"
-          description={<Link to={`/tasks/${reparseResult.taskId}`}>Open task {reparseResult.taskId}</Link>}
+          message={t('documentDetail.reparseCreated')}
+          description={<Link to={`/tasks/${reparseResult.taskId}`}>{t('documents.openTask', { value: reparseResult.taskId })}</Link>}
         />
       )}
 
@@ -157,8 +167,8 @@ export function DocumentDetailPage() {
           showIcon
           closable
           onClose={() => setActivateResult(null)}
-          message="Version activation submitted"
-          description={`Version ${activateResult.version_id} is now active for document ${activateResult.document_id}.`}
+          message={t('documentDetail.activationSubmitted')}
+          description={t('documentDetail.activationDescription', { versionId: activateResult.version_id, documentId: activateResult.document_id })}
         />
       )}
 
@@ -167,29 +177,29 @@ export function DocumentDetailPage() {
           <Col xs={24} xl={15}>
             <Card className="page-card" loading={detailQuery.isLoading}>
               {detail && (
-                <Descriptions title="Base info" bordered column={1}>
-                  <Descriptions.Item label="Title">{detail.title}</Descriptions.Item>
-                  <Descriptions.Item label="Doc code">{detail.doc_code}</Descriptions.Item>
-                  <Descriptions.Item label="Source type">{detail.source_type}</Descriptions.Item>
-                  <Descriptions.Item label="Source uri">{detail.source_uri || '-'}</Descriptions.Item>
-                  <Descriptions.Item label="Domain">{detail.biz_domain || '-'}</Descriptions.Item>
-                  <Descriptions.Item label="Department">{detail.department || '-'}</Descriptions.Item>
-                  <Descriptions.Item label="Security">{detail.security_level}</Descriptions.Item>
-                  <Descriptions.Item label="Status"><Tag color="green">{detail.status}</Tag></Descriptions.Item>
+                <Descriptions title={t('documentDetail.baseInfo')} bordered column={1}>
+                  <Descriptions.Item label={t('documents.titleLabel')}>{detail.title}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.docCode')}>{detail.doc_code}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.sourceType')}>{detail.source_type}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.sourceUri')}>{detail.source_uri || '-'}</Descriptions.Item>
+                  <Descriptions.Item label={t('documents.domain')}>{detail.biz_domain || '-'}</Descriptions.Item>
+                  <Descriptions.Item label={t('documents.department')}>{detail.department || '-'}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.security')}>{detail.security_level}</Descriptions.Item>
+                  <Descriptions.Item label={t('common.status')}><Tag color="green">{detail.status}</Tag></Descriptions.Item>
                 </Descriptions>
               )}
             </Card>
 
-            <Card className="page-card" title="Chunk preview" style={{ marginTop: 20 }}>
+            <Card className="page-card" title={t('documentDetail.chunkPreview')} style={{ marginTop: 20 }}>
               <Table rowKey="chunkId" columns={chunkColumns} dataSource={chunks} pagination={false} />
             </Card>
           </Col>
 
           <Col xs={24} xl={9}>
-            <Card className="page-card" title="Current version">
+            <Card className="page-card" title={t('documentDetail.currentVersion')}>
               {currentVersion ? (
                 <Descriptions column={1} size="small">
-                  <Descriptions.Item label="Version ID">
+                  <Descriptions.Item label={t('common.versionId')}>
                     <Space>
                       <Typography.Text code>{currentVersion.version_id}</Typography.Text>
                       <Button
@@ -197,28 +207,28 @@ export function DocumentDetailPage() {
                         icon={<CopyOutlined />}
                         onClick={async () => {
                           await navigator.clipboard.writeText(currentVersion.version_id);
-                          void message.success('Current version ID copied');
+                          void message.success(t('documentDetail.currentVersionCopied'));
                         }}
                       >
-                        Copy
+                        {t('common.copy')}
                       </Button>
                     </Space>
                   </Descriptions.Item>
-                  <Descriptions.Item label="Version no">{currentVersion.version_no}</Descriptions.Item>
-                  <Descriptions.Item label="Parse status">{currentVersion.parse_status}</Descriptions.Item>
-                  <Descriptions.Item label="Index status">{currentVersion.index_status}</Descriptions.Item>
-                  <Descriptions.Item label="Effective from">{formatDateTime(currentVersion.effective_from)}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.versionNo')}>{currentVersion.version_no}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.parseStatus')}>{currentVersion.parse_status}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.indexStatus')}>{currentVersion.index_status}</Descriptions.Item>
+                  <Descriptions.Item label={t('documentDetail.effectiveFrom')}>{formatDateTime(currentVersion.effective_from)}</Descriptions.Item>
                 </Descriptions>
               ) : (
-                <Typography.Text type="secondary">No version data</Typography.Text>
+                <Typography.Text type="secondary">{t('documentDetail.noVersionData')}</Typography.Text>
               )}
             </Card>
 
             {isAdmin(roleCode) && (
               <>
-                <Card className="page-card" title="Reparse" style={{ marginTop: 20 }}>
+                <Card className="page-card" title={t('documentDetail.reparse')} style={{ marginTop: 20 }}>
                   <Typography.Paragraph type="secondary">
-                    Use this to enqueue a new reparse task for the current document.
+                    {t('documentDetail.reparseDescription')}
                   </Typography.Paragraph>
                   <Form
                     form={reparseForm}
@@ -226,49 +236,49 @@ export function DocumentDetailPage() {
                     initialValues={{ forceReindex: true }}
                     onFinish={(values) => reparseMutation.mutate(values)}
                   >
-                    <Form.Item name="reason" label="Reason">
-                      <Input.TextArea rows={3} placeholder="For example: refresh chunks after parser update" />
+                    <Form.Item name="reason" label={t('documentDetail.reason')}>
+                      <Input.TextArea rows={3} placeholder={t('documentDetail.reasonPlaceholder')} />
                     </Form.Item>
-                    <Form.Item name="forceReindex" label="Force reindex" valuePropName="checked">
-                      <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                    <Form.Item name="forceReindex" label={t('documentDetail.forceReindex')} valuePropName="checked">
+                      <Switch checkedChildren={t('common.yes')} unCheckedChildren={t('common.no')} />
                     </Form.Item>
                     <Button type="primary" htmlType="submit" loading={reparseMutation.isPending} icon={<ReloadOutlined />}>
-                      Submit reparse
+                      {t('documentDetail.submitReparse')}
                     </Button>
                   </Form>
                 </Card>
 
-                <Card className="page-card" title="Activate version" style={{ marginTop: 20 }}>
+                <Card className="page-card" title={t('documentDetail.activateVersion')} style={{ marginTop: 20 }}>
                   <Typography.Paragraph type="secondary">
-                    The current API does not expose version history, so this panel offers quick-fill helpers plus manual entry.
+                    {t('documentDetail.activateDescription')}
                   </Typography.Paragraph>
                   <Space wrap style={{ marginBottom: 16 }}>
                     {currentVersion && (
                       <Button onClick={() => activateForm.setFieldValue('versionId', currentVersion.version_id)}>
-                        Use current version ID
+                        {t('documentDetail.useCurrentVersionId')}
                       </Button>
                     )}
                     {knownSeedHistoryVersion && (
                       <Button onClick={() => activateForm.setFieldValue('versionId', knownSeedHistoryVersion)}>
-                        Use seeded history version
+                        {t('documentDetail.useSeededHistoryVersion')}
                       </Button>
                     )}
                     <Button onClick={() => activateForm.setFieldValue('effectiveFrom', new Date().toISOString())}>
-                      Fill current timestamp
+                      {t('documentDetail.fillCurrentTimestamp')}
                     </Button>
                   </Space>
                   <Form form={activateForm} layout="vertical" onFinish={(values) => activateMutation.mutate(values)}>
-                    <Form.Item name="versionId" label="Target version ID" rules={[{ required: true }]}>
-                      <Input placeholder="Enter target version UUID" />
+                    <Form.Item name="versionId" label={t('documentDetail.targetVersionId')} rules={[{ required: true }]}>
+                      <Input placeholder={t('documentDetail.targetVersionPlaceholder')} />
                     </Form.Item>
-                    <Form.Item name="effectiveFrom" label="Effective from">
-                      <Input placeholder="2026-03-10T00:00:00+08:00 or ISO timestamp" />
+                    <Form.Item name="effectiveFrom" label={t('documentDetail.effectiveFrom')}>
+                      <Input placeholder={t('documentDetail.effectiveFromPlaceholder')} />
                     </Form.Item>
-                    <Form.Item name="remark" label="Remark">
-                      <Input.TextArea rows={3} placeholder="Optional activation note" />
+                    <Form.Item name="remark" label={t('documentDetail.remark')}>
+                      <Input.TextArea rows={3} placeholder={t('documentDetail.remarkPlaceholder')} />
                     </Form.Item>
                     <Button type="primary" htmlType="submit" loading={activateMutation.isPending} icon={<CheckCircleOutlined />}>
-                      Activate
+                      {t('documentDetail.activate')}
                     </Button>
                   </Form>
                 </Card>

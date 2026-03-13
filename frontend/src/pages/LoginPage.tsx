@@ -1,7 +1,9 @@
 import { LockOutlined, UserOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
-import { App, Button, Card, Form, Input, Typography } from 'antd';
+import { App, Button, Card, Form, Input, Space, Typography } from 'antd';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { LocaleSwitcher } from '../components/LocaleSwitcher';
+import { useI18n } from '../i18n/useI18n';
 import { login } from '../services/api/auth';
 import { useAuthStore } from '../stores/authStore';
 
@@ -11,17 +13,18 @@ export function LoginPage() {
   const { message } = App.useApp();
   const setSession = useAuthStore((state) => state.setSession);
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { t } = useI18n();
 
   const mutation = useMutation({
     mutationFn: login,
     onSuccess: (payload) => {
       setSession(payload);
-      void message.success('Login succeeded');
+      void message.success(t('login.success'));
       const target = (location.state as { from?: string } | null)?.from || '/documents';
       navigate(target, { replace: true });
     },
     onError: (error: Error) => {
-      void message.error(error.message || 'Login failed');
+      void message.error(error.message || t('login.failed'));
     },
   });
 
@@ -33,11 +36,14 @@ export function LoginPage() {
     <div className="auth-shell">
       <div className="auth-panel">
         <Card className="page-card" style={{ width: '100%', maxWidth: 420 }}>
-          <Typography.Title level={2} style={{ marginTop: 0 }}>
-            Login to rag-hub
-          </Typography.Title>
+          <Space style={{ width: '100%', justifyContent: 'space-between', marginBottom: 16 }} wrap>
+            <Typography.Title level={2} style={{ margin: 0 }}>
+              {t('login.title')}
+            </Typography.Title>
+            <LocaleSwitcher />
+          </Space>
           <Typography.Paragraph type="secondary">
-            This page uses the existing JWT login API and forwards into the separated admin console.
+            {t('login.subtitle')}
           </Typography.Paragraph>
           <Form
             layout="vertical"
@@ -45,14 +51,14 @@ export function LoginPage() {
             initialValues={{ username: 'dockeradmin', password: 'DockerAdmin123!' }}
             onFinish={(values) => mutation.mutate(values)}
           >
-            <Form.Item label="Username" name="username" rules={[{ required: true, message: 'Please input a username' }]}>
-              <Input prefix={<UserOutlined />} placeholder="dockeradmin" />
+            <Form.Item label={t('login.username')} name="username" rules={[{ required: true, message: t('login.usernameRequired') }]}>
+              <Input prefix={<UserOutlined />} placeholder={t('login.usernamePlaceholder')} />
             </Form.Item>
-            <Form.Item label="Password" name="password" rules={[{ required: true, message: 'Please input a password' }]}>
-              <Input.Password prefix={<LockOutlined />} placeholder="Enter password" />
+            <Form.Item label={t('login.password')} name="password" rules={[{ required: true, message: t('login.passwordRequired') }]}>
+              <Input.Password prefix={<LockOutlined />} placeholder={t('login.passwordPlaceholder')} />
             </Form.Item>
             <Button type="primary" htmlType="submit" block loading={mutation.isPending}>
-              Login
+              {t('login.submit')}
             </Button>
           </Form>
         </Card>
@@ -60,19 +66,19 @@ export function LoginPage() {
       <div className="auth-hero">
         <div>
           <Typography.Title style={{ color: '#fff', fontSize: 48, lineHeight: 1.1, marginTop: 0 }}>
-            RAG Hub Frontend
+            {t('login.heroTitle')}
           </Typography.Title>
           <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.86)', fontSize: 18, maxWidth: 520 }}>
-            The first iteration focuses on auth, document management, search, QA, and permission workflows so we can validate the current backend contract end to end.
+            {t('login.heroDescription')}
           </Typography.Paragraph>
         </div>
         <div className="metric-grid">
           <div className="metric-card">
-            <Typography.Text type="secondary">Admin seed</Typography.Text>
+            <Typography.Text type="secondary">{t('login.adminSeed')}</Typography.Text>
             <Typography.Title level={4}>dockeradmin / DockerAdmin123!</Typography.Title>
           </div>
           <div className="metric-card">
-            <Typography.Text type="secondary">Viewer seed</Typography.Text>
+            <Typography.Text type="secondary">{t('login.viewerSeed')}</Typography.Text>
             <Typography.Title level={4}>viewer / viewer123</Typography.Title>
           </div>
         </div>

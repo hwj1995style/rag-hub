@@ -20,6 +20,7 @@ import {
 import type { UploadFile } from 'antd/es/upload/interface';
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 import { batchImportDocuments, listDocuments, uploadDocument } from '../services/api/documents';
 import { useAuthStore } from '../stores/authStore';
 import type { BatchImportResponse, DocumentListItem, UploadResponse } from '../types/api';
@@ -32,6 +33,7 @@ type AdminActionState =
 
 export function DocumentsPage() {
   const { message } = App.useApp();
+  const { t } = useI18n();
   const roleCode = useAuthStore((state) => state.user?.roleCode);
   const [keyword, setKeyword] = useState('');
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -83,7 +85,7 @@ export function DocumentsPage() {
 
   const columns = [
     {
-      title: 'Title',
+      title: t('documents.titleLabel'),
       dataIndex: 'title',
       key: 'title',
       render: (_: unknown, record: DocumentListItem) => (
@@ -94,45 +96,45 @@ export function DocumentsPage() {
       ),
     },
     {
-      title: 'Domain',
+      title: t('documents.domain'),
       dataIndex: 'bizDomain',
       key: 'bizDomain',
       render: (value: string) => <Tag>{value || 'n/a'}</Tag>,
     },
     {
-      title: 'Department',
+      title: t('documents.department'),
       dataIndex: 'department',
       key: 'department',
       render: (value: string) => value || '-',
     },
     {
-      title: 'Status',
+      title: t('common.status'),
       dataIndex: 'status',
       key: 'status',
       render: (value: string) => <Tag color={value === 'active' ? 'green' : 'default'}>{value}</Tag>,
     },
     {
-      title: 'Version',
+      title: t('common.version'),
       dataIndex: 'currentVersionId',
       key: 'currentVersionId',
       render: (value: string) => <Typography.Text code>{value || '-'}</Typography.Text>,
     },
     {
-      title: 'Updated',
+      title: t('common.updated'),
       dataIndex: 'updatedAt',
       key: 'updatedAt',
       render: (value: string) => formatDateTime(value),
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'action',
       render: (_: unknown, record: DocumentListItem) => (
         <Space wrap>
-          <Link to={`/documents/${record.documentId}`}>Detail</Link>
-          <Link to={`/documents/${record.documentId}/chunks`}>Chunks</Link>
-          <Link to={`/tasks?documentId=${record.documentId}`}>Related tasks</Link>
+          <Link to={`/documents/${record.documentId}`}>{t('documents.detail')}</Link>
+          <Link to={`/documents/${record.documentId}/chunks`}>{t('documents.chunks')}</Link>
+          <Link to={`/tasks?documentId=${record.documentId}`}>{t('documents.relatedTasks')}</Link>
           {isAdmin(roleCode) && (
-            <Link to={`/permissions?resourceType=document&resourceId=${record.documentId}`}>Permissions</Link>
+            <Link to={`/permissions?resourceType=document&resourceId=${record.documentId}`}>{t('documents.permissions')}</Link>
           )}
         </Space>
       ),
@@ -147,17 +149,17 @@ export function DocumentsPage() {
         <Row gutter={[16, 16]} align="middle">
           <Col xs={24} lg={12}>
             <Typography.Title level={3} style={{ marginTop: 0 }}>
-              Documents
+              {t('documents.title')}
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              This screen wires into list, detail, chunk, upload, batch-import, and task follow-up flows from the current backend.
+              {t('documents.subtitle')}
             </Typography.Paragraph>
           </Col>
           <Col xs={24} lg={12}>
             <div className="metric-grid">
-              <div className="metric-card"><Statistic title="Total" value={query.data?.total ?? 0} /></div>
-              <div className="metric-card"><Statistic title="Active" value={activeCount} /></div>
-              <div className="metric-card"><Statistic title="Role" value={roleCode ?? '-'} /></div>
+              <div className="metric-card"><Statistic title={t('documents.totalStat')} value={query.data?.total ?? 0} /></div>
+              <div className="metric-card"><Statistic title={t('documents.activeStat')} value={activeCount} /></div>
+              <div className="metric-card"><Statistic title={t('documents.roleStat')} value={roleCode ?? '-'} /></div>
             </div>
           </Col>
         </Row>
@@ -169,28 +171,28 @@ export function DocumentsPage() {
           showIcon
           closable
           onClose={() => setActionState(null)}
-          message={actionState.type === 'upload' ? 'Upload request submitted' : 'Batch import request submitted'}
+          message={actionState.type === 'upload' ? t('documents.uploadSubmitted') : t('documents.batchSubmitted')}
           description={
             actionState.type === 'upload' ? (
               <Space wrap>
-                <Typography.Text>document: {actionState.payload.document_id}</Typography.Text>
-                <Typography.Text>version: {actionState.payload.version_id}</Typography.Text>
-                <Link to={`/documents/${actionState.payload.document_id}`}>Open document</Link>
-                <Link to={`/tasks/${actionState.payload.task_id}`}>Open task {actionState.payload.task_id}</Link>
-                <Link to={`/tasks?documentId=${actionState.payload.document_id}`}>Open related tasks</Link>
+                <Typography.Text>{t('documents.documentId', { value: actionState.payload.document_id })}</Typography.Text>
+                <Typography.Text>{t('documents.versionId', { value: actionState.payload.version_id })}</Typography.Text>
+                <Link to={`/documents/${actionState.payload.document_id}`}>{t('documents.openDocument')}</Link>
+                <Link to={`/tasks/${actionState.payload.task_id}`}>{t('documents.openTask', { value: actionState.payload.task_id })}</Link>
+                <Link to={`/tasks?documentId=${actionState.payload.document_id}`}>{t('documents.openRelatedTasks')}</Link>
               </Space>
             ) : (
               <Space wrap>
-                <Typography.Text>batch: {actionState.payload.batch_id}</Typography.Text>
-                <Typography.Text>accepted: {actionState.payload.accepted_count}</Typography.Text>
-                <Typography.Text>tasks: {actionState.payload.task_count}</Typography.Text>
-                <Typography.Text>source: {actionState.payload.source_uri}</Typography.Text>
-                <Link to="/tasks?taskType=batch_import">Open batch tasks</Link>
+                <Typography.Text>{t('documents.batchId', { value: actionState.payload.batch_id })}</Typography.Text>
+                <Typography.Text>{t('documents.acceptedCount', { value: actionState.payload.accepted_count })}</Typography.Text>
+                <Typography.Text>{t('documents.taskCount', { value: actionState.payload.task_count })}</Typography.Text>
+                <Typography.Text>{t('documents.sourceText', { value: actionState.payload.source_uri })}</Typography.Text>
+                <Link to="/tasks?taskType=batch_import">{t('documents.openBatchTasks')}</Link>
                 <Link to={`/tasks?taskType=batch_import&sourceKeyword=${encodeURIComponent(actionState.payload.source_uri)}`}>
-                  Open same-source tasks
+                  {t('documents.openSameSourceTasks')}
                 </Link>
                 {actionState.payload.task_ids[0] && (
-                  <Link to={`/tasks/${actionState.payload.task_ids[0]}`}>Open task {actionState.payload.task_ids[0]}</Link>
+                  <Link to={`/tasks/${actionState.payload.task_ids[0]}`}>{t('documents.openTask', { value: actionState.payload.task_ids[0] })}</Link>
                 )}
               </Space>
             )
@@ -199,89 +201,52 @@ export function DocumentsPage() {
       )}
 
       {uploadError && (
-        <Alert
-          type="error"
-          showIcon
-          closable
-          onClose={() => setUploadError(null)}
-          message="Upload failed"
-          description={uploadError}
-        />
+        <Alert type="error" showIcon closable onClose={() => setUploadError(null)} message={t('documents.uploadFailed')} description={uploadError} />
       )}
 
       {batchError && (
-        <Alert
-          type="error"
-          showIcon
-          closable
-          onClose={() => setBatchError(null)}
-          message="Batch import failed"
-          description={batchError}
-        />
+        <Alert type="error" showIcon closable onClose={() => setBatchError(null)} message={t('documents.batchFailed')} description={batchError} />
       )}
 
       <Card className="page-card">
         <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
           <Input.Search
-            placeholder="Search by title"
+            placeholder={t('documents.searchPlaceholder')}
             allowClear
             style={{ maxWidth: 320 }}
             value={keyword}
-            enterButton="Search"
+            enterButton={t('common.search')}
             onChange={(event) => setKeyword(event.target.value)}
             onSearch={(value) => setKeyword(value.trim())}
           />
           <Space>
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
-              Refresh
+              {t('common.refresh')}
             </Button>
-            <Link to="/tasks">Open task center</Link>
+            <Link to="/tasks">{t('documents.openTaskCenter')}</Link>
             {isAdmin(roleCode) && (
               <>
-                <Button
-                  type="primary"
-                  icon={<CloudUploadOutlined />}
-                  onClick={() => {
-                    setUploadError(null);
-                    setUploadOpen(true);
-                  }}
-                >
-                  Upload
+                <Button type="primary" icon={<CloudUploadOutlined />} onClick={() => { setUploadError(null); setUploadOpen(true); }}>
+                  {t('documents.upload')}
                 </Button>
-                <Button
-                  icon={<InboxOutlined />}
-                  onClick={() => {
-                    setBatchError(null);
-                    setBatchOpen(true);
-                  }}
-                >
-                  Batch import
+                <Button icon={<InboxOutlined />} onClick={() => { setBatchError(null); setBatchOpen(true); }}>
+                  {t('documents.batchImport')}
                 </Button>
               </>
             )}
           </Space>
         </Space>
 
-        <Table
-          rowKey="documentId"
-          style={{ marginTop: 20 }}
-          loading={query.isLoading}
-          columns={columns}
-          dataSource={items}
-          pagination={false}
-        />
+        <Table rowKey="documentId" style={{ marginTop: 20 }} loading={query.isLoading} columns={columns} dataSource={items} pagination={false} />
       </Card>
 
       <Modal
-        title="Upload document"
+        title={t('documents.uploadTitle')}
         open={uploadOpen}
-        onCancel={() => {
-          setUploadError(null);
-          setUploadOpen(false);
-        }}
+        onCancel={() => { setUploadError(null); setUploadOpen(false); }}
         onOk={() => uploadForm.submit()}
         confirmLoading={uploadMutation.isPending}
-        okText="Submit upload"
+        okText={t('documents.submitUpload')}
       >
         <Form
           form={uploadForm}
@@ -292,7 +257,7 @@ export function DocumentsPage() {
             const formData = new FormData();
             const file = (values.file as UploadFile[] | undefined)?.[0]?.originFileObj;
             if (!file) {
-              void message.error('Please choose a file');
+              void message.error(t('documents.pleaseChooseFile'));
               return;
             }
             if ((file.size ?? 0) <= 0) {
@@ -311,65 +276,38 @@ export function DocumentsPage() {
             uploadMutation.mutate(formData);
           }}
         >
-          <Form.Item
-            name="file"
-            label="File"
-            valuePropName="fileList"
-            getValueFromEvent={(event) => event?.fileList}
-            rules={[{ required: true, message: 'Please choose a file' }]}
-          >
+          <Form.Item name="file" label={t('documents.file')} valuePropName="fileList" getValueFromEvent={(event) => event?.fileList} rules={[{ required: true, message: t('documents.pleaseChooseFile') }]}>
             <Upload beforeUpload={() => false} maxCount={1}>
-              <Button icon={<CloudUploadOutlined />}>Choose file</Button>
+              <Button icon={<CloudUploadOutlined />}>{t('documents.chooseFile')}</Button>
             </Upload>
           </Form.Item>
           {uploadFileList.length > 0 && (
-            <Alert
-              type="info"
-              showIcon
-              style={{ marginBottom: 16 }}
-              message={`Selected: ${uploadFileList[0].name}`}
-              description={`Size: ${uploadFileList[0].size ?? 0} bytes`}
-            />
+            <Alert type="info" showIcon style={{ marginBottom: 16 }} message={t('documents.selected', { name: uploadFileList[0].name })} description={t('documents.size', { size: uploadFileList[0].size ?? 0 })} />
           )}
-          <Form.Item name="title" label="Title"><Input /></Form.Item>
-          <Form.Item name="bizDomain" label="Domain"><Input /></Form.Item>
-          <Form.Item name="department" label="Department"><Input /></Form.Item>
-          <Form.Item name="securityLevel" label="Security level"><Input placeholder="internal" /></Form.Item>
-          <Form.Item name="sourceSystem" label="Source system"><Input placeholder="crm / shared-drive / s3" /></Form.Item>
-          <Form.Item name="owner" label="Owner"><Input placeholder="alice" /></Form.Item>
-          <Form.Item name="permissionTags" label="Permission tags"><Input placeholder="finance,internal" /></Form.Item>
+          <Form.Item name="title" label={t('documents.titleLabel')}><Input /></Form.Item>
+          <Form.Item name="bizDomain" label={t('documents.domain')}><Input /></Form.Item>
+          <Form.Item name="department" label={t('documents.department')}><Input /></Form.Item>
+          <Form.Item name="securityLevel" label={t('documents.securityLevel')}><Input placeholder="internal" /></Form.Item>
+          <Form.Item name="sourceSystem" label={t('documents.sourceSystem')}><Input placeholder="crm / shared-drive / s3" /></Form.Item>
+          <Form.Item name="owner" label={t('documents.owner')}><Input placeholder="alice" /></Form.Item>
+          <Form.Item name="permissionTags" label={t('documents.permissionTags')}><Input placeholder="finance,internal" /></Form.Item>
         </Form>
       </Modal>
 
       <Modal
-        title="Batch import"
+        title={t('documents.batchTitle')}
         open={batchOpen}
-        onCancel={() => {
-          setBatchError(null);
-          setBatchOpen(false);
-        }}
+        onCancel={() => { setBatchError(null); setBatchOpen(false); }}
         onOk={() => batchForm.submit()}
         confirmLoading={batchMutation.isPending}
-        okText="Submit import"
+        okText={t('documents.submitImport')}
       >
-        <Form
-          form={batchForm}
-          layout="vertical"
-          initialValues={{ sourceType: 's3', securityLevel: 'internal' }}
-          onFinish={(values) => {
-            setBatchError(null);
-            batchMutation.mutate(values);
-          }}
-        >
-          <Form.Item name="sourceType" label="Source type" rules={[{ required: true }]}>
-            <Input placeholder="s3" />
-          </Form.Item>
-          <Form.Item name="sourceUri" label="Source URI" rules={[{ required: true }]}>
-            <Input placeholder="s3://bucket/path" />
-          </Form.Item>
-          <Form.Item name="bizDomain" label="Domain"><Input /></Form.Item>
-          <Form.Item name="department" label="Department"><Input /></Form.Item>
-          <Form.Item name="securityLevel" label="Security level"><Input /></Form.Item>
+        <Form form={batchForm} layout="vertical" initialValues={{ sourceType: 's3', securityLevel: 'internal' }} onFinish={(values) => { setBatchError(null); batchMutation.mutate(values); }}>
+          <Form.Item name="sourceType" label={t('documents.sourceType')} rules={[{ required: true }]}><Input placeholder="s3" /></Form.Item>
+          <Form.Item name="sourceUri" label={t('documents.sourceUri')} rules={[{ required: true }]}><Input placeholder="s3://bucket/path" /></Form.Item>
+          <Form.Item name="bizDomain" label={t('documents.domain')}><Input /></Form.Item>
+          <Form.Item name="department" label={t('documents.department')}><Input /></Form.Item>
+          <Form.Item name="securityLevel" label={t('documents.securityLevel')}><Input /></Form.Item>
         </Form>
       </Modal>
     </div>

@@ -27,6 +27,7 @@ rag-hub 是一个面向文档接入、检索问答、权限治理和任务运营
 - `docs/knowledge-base-document-permission-design.md`
 - `docs/knowledge-base-permission-governance-enhancement-design.md`
 - `docs/knowledge-base-batch-import-followup-design.md`
+- `docs/frontend-i18n-design.md`
 - `docs/knowledge-base-test-cases.md`
 
 ## 前端当前能力

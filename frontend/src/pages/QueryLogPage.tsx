@@ -2,6 +2,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Tag, Typography } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 import { getQueryLog } from '../services/api/qa';
 import type { Citation } from '../types/api';
 import { formatDateTime } from '../utils/format';
@@ -9,6 +10,7 @@ import { formatDateTime } from '../utils/format';
 export function QueryLogPage() {
   const navigate = useNavigate();
   const { logId = '' } = useParams();
+  const { t } = useI18n();
   const [form] = Form.useForm();
 
   const query = useQuery({
@@ -23,23 +25,23 @@ export function QueryLogPage() {
         <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
           <div>
             <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 4 }}>
-              Query Log Detail
+              {t('queryLog.title')}
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              Use this page to inspect saved QA traces, cited chunks, and latency when you need to explain an answer.
+              {t('queryLog.subtitle')}
             </Typography.Paragraph>
           </div>
           <Space>
-            <Link to="/query-logs">Back to query logs</Link>
-            <Link to="/qa">Back to QA</Link>
+            <Link to="/query-logs">{t('queryLog.backToList')}</Link>
+            <Link to="/qa">{t('queryLog.backToQa')}</Link>
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
-              Refresh
+              {t('common.refresh')}
             </Button>
           </Space>
         </Space>
       </Card>
 
-      <Card className="page-card" title="Lookup another query log">
+      <Card className="page-card" title={t('queryLog.lookup')}>
         <Form
           form={form}
           layout="inline"
@@ -50,40 +52,40 @@ export function QueryLogPage() {
             }
           }}
         >
-          <Form.Item name="logId" label="Log ID" rules={[{ required: true, message: 'Please enter a log ID' }]}>
-            <Input style={{ width: 360 }} placeholder="66666666-6666-6666-6666-666666666666" />
+          <Form.Item name="logId" label={t('queryLog.logId')} rules={[{ required: true, message: t('queryLog.logIdRequired') }]}>
+            <Input style={{ width: 360 }} placeholder={t('queryLog.logIdPlaceholder')} />
           </Form.Item>
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-            Open
+            {t('common.open')}
           </Button>
-          <Button onClick={() => navigate('/query-logs')}>Open query log list</Button>
-          <Button onClick={() => navigate('/query-logs/66666666-6666-6666-6666-666666666666')}>Use sample log</Button>
+          <Button onClick={() => navigate('/query-logs')}>{t('queryLog.openList')}</Button>
+          <Button onClick={() => navigate('/query-logs/66666666-6666-6666-6666-666666666666')}>{t('queryLog.useSample')}</Button>
         </Form>
       </Card>
 
-      <Card className="page-card" title="Log overview" loading={query.isLoading}>
+      <Card className="page-card" title={t('queryLog.overview')} loading={query.isLoading}>
         {query.error && (
           <Alert
             style={{ marginBottom: 16 }}
             type="error"
             showIcon
-            message="Failed to load query log"
-            description={query.error instanceof Error ? query.error.message : 'Request failed'}
+            message={t('queryLog.loadFailed')}
+            description={query.error instanceof Error ? query.error.message : t('common.loadingFailed')}
           />
         )}
         {query.data && (
           <Descriptions bordered column={1}>
-            <Descriptions.Item label="Log ID">{query.data.log_id}</Descriptions.Item>
-            <Descriptions.Item label="Session ID">
+            <Descriptions.Item label={t('queryLog.logId')}>{query.data.log_id}</Descriptions.Item>
+            <Descriptions.Item label={t('common.sessionId')}>
               {query.data.session_id ? <Link to={`/query-logs?sessionId=${query.data.session_id}`}>{query.data.session_id}</Link> : '-'}
             </Descriptions.Item>
-            <Descriptions.Item label="Created at">{formatDateTime(query.data.created_at)}</Descriptions.Item>
-            <Descriptions.Item label="Latency">{query.data.latency_ms ? `${query.data.latency_ms} ms` : '-'}</Descriptions.Item>
-            <Descriptions.Item label="Trace ID">{query.data.trace_id}</Descriptions.Item>
-            <Descriptions.Item label="Question">{query.data.query_text}</Descriptions.Item>
-            <Descriptions.Item label="Rewritten query">{query.data.rewritten_query || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Answer">{query.data.answer_text || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Retrieved chunk IDs">
+            <Descriptions.Item label={t('common.createdAt')}>{formatDateTime(query.data.created_at)}</Descriptions.Item>
+            <Descriptions.Item label={t('queryLog.latency')}>{query.data.latency_ms ? `${query.data.latency_ms} ms` : '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('common.traceId')}>{query.data.trace_id}</Descriptions.Item>
+            <Descriptions.Item label={t('common.question')}>{query.data.query_text}</Descriptions.Item>
+            <Descriptions.Item label={t('common.rewrittenQuery')}>{query.data.rewritten_query || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('common.answer')}>{query.data.answer_text || '-'}</Descriptions.Item>
+            <Descriptions.Item label={t('queryLog.retrievedChunkIds')}>
               <Space wrap>
                 {(query.data.retrieved_chunk_ids ?? []).map((item) => (
                   <Tag key={item}>{item}</Tag>
@@ -98,27 +100,27 @@ export function QueryLogPage() {
             style={{ marginTop: 16 }}
             type="info"
             showIcon
-            message="No citations recorded"
-            description="This query log did not store any citations, so only the raw answer trace is available."
+            message={t('queryLog.noCitations')}
+            description={t('queryLog.noCitationsDescription')}
           />
         )}
       </Card>
 
-      <Card className="page-card" title="Citations">
+      <Card className="page-card" title={t('common.citations')}>
         <Table<Citation>
           rowKey={(record) => `${record.documentId}-${record.locator}`}
           dataSource={query.data?.citations ?? []}
           pagination={false}
           columns={[
             {
-              title: 'Document',
+              title: t('common.document'),
               dataIndex: 'documentTitle',
               key: 'documentTitle',
               render: (_: unknown, record) => <Link to={`/documents/${record.documentId}`}>{record.documentTitle}</Link>,
             },
-            { title: 'Title Path', dataIndex: 'titlePath', key: 'titlePath' },
-            { title: 'Locator', dataIndex: 'locator', key: 'locator', width: 100 },
-            { title: 'Snippet', dataIndex: 'snippet', key: 'snippet' },
+            { title: t('common.titlePath'), dataIndex: 'titlePath', key: 'titlePath' },
+            { title: t('common.locator'), dataIndex: 'locator', key: 'locator', width: 100 },
+            { title: t('qa.snippet'), dataIndex: 'snippet', key: 'snippet' },
           ]}
         />
       </Card>

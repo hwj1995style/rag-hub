@@ -1,9 +1,10 @@
-import { DeleteOutlined, PlusOutlined, ReloadOutlined, SafetyOutlined } from '@ant-design/icons';
+﻿import { DeleteOutlined, PlusOutlined, ReloadOutlined, SafetyOutlined } from '@ant-design/icons';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import { Alert, App, Button, Card, Empty, Form, Input, Popconfirm, Select, Space, Table, Tag, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 import { bindPermissions, deletePermission, listPermissions, type PermissionListParams } from '../services/api/permissions';
 import type { PermissionPolicyItem } from '../types/api';
 import { useAuthStore } from '../stores/authStore';
@@ -49,18 +50,9 @@ function toSearchParams(filters: PermissionFilterState) {
   return params;
 }
 
-function getCardTitle(filters: PermissionFilterState) {
-  if (filters.resourceType && filters.resourceId) {
-    return `Current policies for ${filters.resourceType}:${filters.resourceId}`;
-  }
-  if (filters.subjectType && filters.subjectValue) {
-    return `Policies for ${filters.subjectType}:${filters.subjectValue}`;
-  }
-  return 'Permission query results';
-}
-
 export function PermissionsPage() {
   const { message } = App.useApp();
+  const { t } = useI18n();
   const roleCode = useAuthStore((state) => state.user?.roleCode);
   const [searchParams, setSearchParams] = useSearchParams();
   const [form] = Form.useForm();
@@ -89,7 +81,7 @@ export function PermissionsPage() {
   const bindMutation = useMutation({
     mutationFn: bindPermissions,
     onSuccess: (data, variables) => {
-      const text = `Stored ${data.policy_count} policies`;
+      const text = t('permissions.stored', { value: data.policy_count });
       const nextFilters = {
         resourceType: variables.resourceType,
         resourceId: variables.resourceId,
@@ -111,10 +103,11 @@ export function PermissionsPage() {
   const deleteMutation = useMutation({
     mutationFn: deletePermission,
     onSuccess: () => {
-      setSuccessMessage('Policy deleted');
+      const text = t('permissions.deleted');
+      setSuccessMessage(text);
       setErrorMessage(null);
       void policyQuery.refetch();
-      void message.success('Policy deleted');
+      void message.success(text);
     },
     onError: (error: Error) => {
       setErrorMessage(error.message);
@@ -136,15 +129,25 @@ export function PermissionsPage() {
     return tags;
   }, [currentFilters]);
 
+  const title = (() => {
+    if (currentFilters.resourceType && currentFilters.resourceId) {
+      return t('permissions.currentPolicies', { resourceType: currentFilters.resourceType, resourceId: currentFilters.resourceId });
+    }
+    if (currentFilters.subjectType && currentFilters.subjectValue) {
+      return t('permissions.subjectPolicies', { subjectType: currentFilters.subjectType, subjectValue: currentFilters.subjectValue });
+    }
+    return t('permissions.queryResults');
+  })();
+
   const columns: ColumnsType<PermissionPolicyItem> = [
     {
-      title: 'Policy ID',
+      title: t('permissions.policyId'),
       dataIndex: 'policyId',
       key: 'policyId',
       render: (value: string) => <Typography.Text copyable>{value}</Typography.Text>,
     },
     {
-      title: 'Resource',
+      title: t('permissions.resource'),
       key: 'resource',
       render: (_, record) => (
         <Space direction="vertical" size={2}>
@@ -154,45 +157,45 @@ export function PermissionsPage() {
       ),
     },
     {
-      title: 'Subject type',
+      title: t('permissions.subjectType'),
       dataIndex: 'subjectType',
       key: 'subjectType',
       render: (value: string) => <Tag>{value}</Tag>,
     },
     {
-      title: 'Subject value',
+      title: t('permissions.subjectValue'),
       dataIndex: 'subjectValue',
       key: 'subjectValue',
     },
     {
-      title: 'Effect',
+      title: t('permissions.effect'),
       dataIndex: 'effect',
       key: 'effect',
       render: (value: string) => <Tag color={value === 'deny' ? 'red' : 'green'}>{value}</Tag>,
     },
     {
-      title: 'Created at',
+      title: t('permissions.createdAt'),
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (value: string | null) => formatDateTime(value),
     },
     {
-      title: 'Actions',
+      title: t('common.actions'),
       key: 'actions',
       render: (_, record) => (
         <Space wrap>
           {currentFilters.subjectType && currentFilters.subjectValue && (
-            <Link to={`/permissions?resourceType=${record.resourceType}&resourceId=${record.resourceId}`}>Open resource</Link>
+            <Link to={`/permissions?resourceType=${record.resourceType}&resourceId=${record.resourceId}`}>{t('permissions.openResource')}</Link>
           )}
           <Popconfirm
-            title="Delete this policy?"
-            description="This only removes the selected rule."
-            okText="Delete"
-            cancelText="Cancel"
+            title={t('permissions.deleteConfirm')}
+            description={t('permissions.deleteDescription')}
+            okText={t('permissions.delete')}
+            cancelText={t('permissions.cancel')}
             onConfirm={() => deleteMutation.mutate(record.policyId)}
           >
             <Button danger icon={<DeleteOutlined />} loading={deleteMutation.isPending && deleteMutation.variables === record.policyId}>
-              Delete
+              {t('permissions.delete')}
             </Button>
           </Popconfirm>
         </Space>
@@ -203,8 +206,8 @@ export function PermissionsPage() {
   if (!isAdmin(roleCode)) {
     return (
       <Card className="page-card">
-        <Typography.Title level={4}>Permission denied</Typography.Title>
-        <Typography.Text type="secondary">Please log in with an admin account.</Typography.Text>
+        <Typography.Title level={4}>{t('permissions.permissionDenied')}</Typography.Title>
+        <Typography.Text type="secondary">{t('permissions.permissionDeniedDescription')}</Typography.Text>
       </Card>
     );
   }
@@ -220,7 +223,7 @@ export function PermissionsPage() {
     };
     if (!canQuery(nextFilters)) {
       setSuccessMessage(null);
-      setErrorMessage('Please provide a complete resource pair or a complete subject pair before loading policies.');
+      setErrorMessage(t('permissions.incompleteFilter'));
       return;
     }
     setSuccessMessage(null);
@@ -240,14 +243,14 @@ export function PermissionsPage() {
           showIcon
           closable
           onClose={() => setErrorMessage(null)}
-          message="Permission governance failed"
+          message={t('permissions.failed')}
           description={errorMessage}
         />
       )}
 
-      <Card className="page-card" title="Permission Binding" extra={<SafetyOutlined />}>
+      <Card className="page-card" title={t('permissions.title')} extra={<SafetyOutlined />}>
         <Typography.Paragraph type="secondary">
-          Query document-level policies from a resource or subject view, then delete a single rule or replace the full policy set.
+          {t('permissions.subtitle')}
         </Typography.Paragraph>
         <Form
           form={form}
@@ -271,26 +274,24 @@ export function PermissionsPage() {
           }}
         >
           <Space align="start" wrap style={{ width: '100%' }}>
-            <Form.Item name="resourceType" label="Resource type" rules={[{ required: true }]}><Input data-testid="permission-filter-resource-type" style={{ width: 180 }} /></Form.Item>
-              
-            <Form.Item name="resourceId" label="Resource ID" rules={[{ required: true }]}><Input data-testid="permission-filter-resource-id" style={{ width: 360 }} /></Form.Item>
-              
-            <Form.Item name="subjectType" label="Subject type"><Select data-testid="permission-filter-subject-type" allowClear style={{ width: 180 }} options={[{ value: 'role' }, { value: 'department' }, { value: 'user' }]} /></Form.Item>
-            <Form.Item name="subjectValue" label="Subject value"><Input data-testid="permission-filter-subject-value" style={{ width: 220 }} /></Form.Item>
-            <Form.Item name="effect" label="Effect"><Select data-testid="permission-filter-effect" allowClear style={{ width: 160 }} options={[{ value: 'allow' }, { value: 'deny' }]} /></Form.Item>
+            <Form.Item name="resourceType" label={t('permissions.resourceType')} rules={[{ required: true }]}><Input data-testid="permission-filter-resource-type" style={{ width: 180 }} /></Form.Item>
+            <Form.Item name="resourceId" label={t('permissions.resourceId')} rules={[{ required: true }]}><Input data-testid="permission-filter-resource-id" style={{ width: 360 }} /></Form.Item>
+            <Form.Item name="subjectType" label={t('permissions.subjectType')}><Select data-testid="permission-filter-subject-type" allowClear style={{ width: 180 }} options={[{ value: 'role' }, { value: 'department' }, { value: 'user' }]} /></Form.Item>
+            <Form.Item name="subjectValue" label={t('permissions.subjectValue')}><Input data-testid="permission-filter-subject-value" style={{ width: 220 }} /></Form.Item>
+            <Form.Item name="effect" label={t('permissions.effect')}><Select data-testid="permission-filter-effect" allowClear style={{ width: 160 }} options={[{ value: 'allow' }, { value: 'deny' }]} /></Form.Item>
             <Form.Item label=" " colon={false}>
               <Space wrap>
                 <Button onClick={() => void handleLoadPolicies()} icon={<ReloadOutlined />}>
-                  Load policies
+                  {t('permissions.loadPolicies')}
                 </Button>
                 <Button onClick={() => void policyQuery.refetch()} loading={policyQuery.isFetching} disabled={!canQuery(currentFilters)}>
-                  Refresh list
+                  {t('permissions.refreshList')}
                 </Button>
               </Space>
             </Form.Item>
           </Space>
 
-          <Card size="small" title={getCardTitle(currentFilters)} style={{ marginBottom: 20 }}>
+          <Card size="small" title={title} style={{ marginBottom: 20 }}>
             {activeTags.length > 0 && (
               <Space wrap style={{ marginBottom: 16 }}>
                 {activeTags.map((tag) => (
@@ -303,8 +304,8 @@ export function PermissionsPage() {
                 style={{ marginBottom: 16 }}
                 type="info"
                 showIcon
-                message="Choose a resource pair or subject pair to load policies"
-                description="Provide resourceType + resourceId, or subjectType + subjectValue. You can optionally add effect as a filter."
+                message={t('permissions.chooseFilters')}
+                description={t('permissions.chooseFiltersDescription')}
               />
             )}
             {policyQuery.error && (
@@ -312,8 +313,8 @@ export function PermissionsPage() {
                 style={{ marginBottom: 16 }}
                 type="error"
                 showIcon
-                message="Failed to load permission policies"
-                description={policyQuery.error instanceof Error ? policyQuery.error.message : 'Request failed'}
+                message={t('permissions.loadFailed')}
+                description={policyQuery.error instanceof Error ? policyQuery.error.message : t('common.loadingFailed')}
               />
             )}
             <Table<PermissionPolicyItem>
@@ -322,7 +323,7 @@ export function PermissionsPage() {
               dataSource={policyQuery.data?.items ?? []}
               columns={columns}
               pagination={false}
-              locale={{ emptyText: <Empty description="No permission policies matched the current filters." /> }}
+              locale={{ emptyText: <Empty description={t('permissions.noMatch')} /> }}
             />
           </Card>
 
@@ -331,17 +332,17 @@ export function PermissionsPage() {
               <Space direction="vertical" style={{ width: '100%' }}>
                 {fields.map((field, index) => (
                   <Space key={field.key} align="baseline" wrap>
-                    <Form.Item {...field} name={[field.name, 'subjectType']} label="Subject type" rules={[{ required: true }]}> 
+                    <Form.Item {...field} name={[field.name, 'subjectType']} label={t('permissions.subjectType')} rules={[{ required: true }]}> 
                       <Select
                         data-testid={`policy-row-subject-type-${index}`}
                         style={{ width: 160 }}
                         options={[{ value: 'role' }, { value: 'department' }, { value: 'user' }]}
                       />
                     </Form.Item>
-                    <Form.Item {...field} name={[field.name, 'subjectValue']} label="Subject value" rules={[{ required: true }]}> 
+                    <Form.Item {...field} name={[field.name, 'subjectValue']} label={t('permissions.subjectValue')} rules={[{ required: true }]}> 
                       <Input data-testid={`policy-row-subject-value-${index}`} style={{ width: 220 }} />
                     </Form.Item>
-                    <Form.Item {...field} name={[field.name, 'effect']} label="Effect" rules={[{ required: true }]}> 
+                    <Form.Item {...field} name={[field.name, 'effect']} label={t('permissions.effect')} rules={[{ required: true }]}> 
                       <Select
                         data-testid={`policy-row-effect-${index}`}
                         style={{ width: 140 }}
@@ -349,18 +350,18 @@ export function PermissionsPage() {
                       />
                     </Form.Item>
                     <Button danger onClick={() => remove(field.name)}>
-                      Remove
+                      {t('permissions.remove')}
                     </Button>
                   </Space>
                 ))}
                 <Button icon={<PlusOutlined />} onClick={() => add({ subjectType: 'role', effect: 'allow' })}>
-                  Add policy
+                  {t('permissions.addPolicy')}
                 </Button>
               </Space>
             )}
           </Form.List>
           <Button type="primary" htmlType="submit" loading={bindMutation.isPending} style={{ marginTop: 20 }}>
-            Submit policy set
+            {t('permissions.submit')}
           </Button>
         </Form>
       </Card>

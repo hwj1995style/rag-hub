@@ -8,6 +8,19 @@ const missingTaskId = '99999999-9999-9999-9999-999999999999';
 const missingQueryLogId = '77777777-7777-7777-7777-777777777777';
 
 test.describe('rag-hub core regression', () => {
+  test('language switcher can toggle to Chinese and persist after reload', async ({ page }) => {
+    await page.goto('/login');
+
+    await page.locator('.ant-segmented').first().locator('.ant-segmented-item').nth(1).click();
+    await expect.poll(() => page.evaluate(() => window.localStorage.getItem('rag-hub-locale'))).toBe('zh-CN');
+    await expect.poll(() => page.evaluate(() => document.body.innerText.includes('\u767b\u5f55 rag-hub'))).toBeTruthy();
+    await expect.poll(() => page.evaluate(() => document.body.innerText.includes('\u7528\u6237\u540d'))).toBeTruthy();
+
+    await page.reload();
+    await expect.poll(() => page.evaluate(() => window.localStorage.getItem('rag-hub-locale'))).toBe('zh-CN');
+    await expect.poll(() => page.evaluate(() => document.body.innerText.includes('\u767b\u5f55 rag-hub'))).toBeTruthy();
+  });
+
   test('admin can log in and browse documents', async ({ page }) => {
     await login(page);
 
@@ -315,7 +328,7 @@ test.describe('rag-hub core regression', () => {
     await page.getByLabel('Remark').fill('playwright activate regression');
     await page.getByRole('button', { name: 'Activate' }).click();
 
-    await expect(page.getByText('Version activation submitted', { exact: true })).toBeVisible();
+    await expect(page.getByText('Version activation submitted', { exact: true }).first()).toBeVisible();
     await expect(page.getByText(currentVersionId, { exact: true }).first()).toBeVisible();
   });
 

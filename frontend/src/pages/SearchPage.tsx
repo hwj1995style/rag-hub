@@ -2,11 +2,13 @@ import { SearchOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Alert, App, Button, Card, Col, Form, Input, InputNumber, Row, Space, Table, Tag, Typography } from 'antd';
 import { useMemo, useState } from 'react';
+import { useI18n } from '../i18n/useI18n';
 import { searchKnowledge } from '../services/api/search';
 import type { SearchItem } from '../types/api';
 
 export function SearchPage() {
   const { message } = App.useApp();
+  const { t } = useI18n();
   const [form] = Form.useForm();
   const [queryError, setQueryError] = useState<string | null>(null);
 
@@ -30,11 +32,9 @@ export function SearchPage() {
         <Row gutter={[20, 20]}>
           <Col xs={24} xl={10}>
             <Typography.Title level={3} style={{ marginTop: 0 }}>
-              Search Workbench
+              {t('search.title')}
             </Typography.Title>
-            <Typography.Paragraph type="secondary">
-              This page is wired to POST /api/search/query so we can validate topK and lightweight filters end to end.
-            </Typography.Paragraph>
+            <Typography.Paragraph type="secondary">{t('search.subtitle')}</Typography.Paragraph>
             <Form
               form={form}
               layout="vertical"
@@ -48,32 +48,32 @@ export function SearchPage() {
                 });
               }}
             >
-              <Form.Item name="query" label="Query" rules={[{ required: true }]}>
-                <Input.TextArea rows={4} placeholder="business license" />
+              <Form.Item name="query" label={t('search.query')} rules={[{ required: true }]}> 
+                <Input.TextArea rows={4} placeholder={t('search.queryPlaceholder')} />
               </Form.Item>
               <Space align="start" wrap>
-                <Form.Item name="topK" label="TopK">
+                <Form.Item name="topK" label={t('search.topK')}>
                   <InputNumber min={1} max={20} />
                 </Form.Item>
-                <Form.Item name="bizDomain" label="Domain filter">
-                  <Input placeholder="credit" />
+                <Form.Item name="bizDomain" label={t('search.domainFilter')}>
+                  <Input placeholder={t('search.domainPlaceholder')} />
                 </Form.Item>
               </Space>
               <Button type="primary" htmlType="submit" icon={<SearchOutlined />} loading={mutation.isPending}>
-                Search
+                {t('common.search')}
               </Button>
             </Form>
           </Col>
           <Col xs={24} xl={14}>
             <div className="metric-grid">
               <div className="metric-card">
-                <Typography.Text type="secondary">Hits</Typography.Text>
+                <Typography.Text type="secondary">{t('search.hits')}</Typography.Text>
                 <Typography.Title level={3}>{mutation.data?.total ?? 0}</Typography.Title>
               </div>
               <div className="metric-card">
-                <Typography.Text type="secondary">State</Typography.Text>
+                <Typography.Text type="secondary">{t('search.state')}</Typography.Text>
                 <Tag color={mutation.data ? 'green' : 'default'}>
-                  {mutation.isPending ? 'Running' : mutation.data ? 'Complete' : 'Idle'}
+                  {mutation.isPending ? t('search.stateRunning') : mutation.data ? t('search.stateComplete') : t('search.stateIdle')}
                 </Tag>
               </div>
             </div>
@@ -81,37 +81,21 @@ export function SearchPage() {
         </Row>
       </Card>
 
-      {queryError && (
-        <Alert
-          type="error"
-          showIcon
-          closable
-          onClose={() => setQueryError(null)}
-          message="Search failed"
-          description={queryError}
-        />
-      )}
+      {queryError && <Alert type="error" showIcon closable onClose={() => setQueryError(null)} message={t('search.failed')} description={queryError} />}
 
-      {showNoAccessibleResults && (
-        <Alert
-          type="info"
-          showIcon
-          message="No accessible results"
-          description="Matching documents may be restricted or unavailable for the current account."
-        />
-      )}
+      {showNoAccessibleResults && <Alert type="info" showIcon message={t('search.noAccessibleResults')} description={t('search.noAccessibleDescription')} />}
 
-      <Card className="page-card" title="Search Results">
+      <Card className="page-card" title={t('search.results')}>
         <Table<SearchItem>
           rowKey="chunkId"
           dataSource={mutation.data?.items ?? []}
           pagination={false}
           columns={[
-            { title: 'Document', dataIndex: 'documentTitle', key: 'documentTitle' },
-            { title: 'Title Path', dataIndex: 'titlePath', key: 'titlePath' },
-            { title: 'Locator', dataIndex: 'locator', key: 'locator', width: 100 },
-            { title: 'Score', dataIndex: 'score', key: 'score', width: 100 },
-            { title: 'Snippet', dataIndex: 'snippet', key: 'snippet' },
+            { title: t('common.document'), dataIndex: 'documentTitle', key: 'documentTitle' },
+            { title: t('common.titlePath'), dataIndex: 'titlePath', key: 'titlePath' },
+            { title: t('common.locator'), dataIndex: 'locator', key: 'locator', width: 100 },
+            { title: t('search.score'), dataIndex: 'score', key: 'score', width: 100 },
+            { title: t('search.snippet'), dataIndex: 'snippet', key: 'snippet' },
           ]}
         />
       </Card>

@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Switch, Tag, Typography } from 'antd';
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
+import { useI18n } from '../i18n/useI18n';
 import { getTask } from '../services/api/tasks';
 import { formatDateTime } from '../utils/format';
 
@@ -27,6 +28,7 @@ function getTaskStatusColor(status?: string): string {
 export function TaskDetailPage() {
   const navigate = useNavigate();
   const { taskId = '' } = useParams();
+  const { t } = useI18n();
   const [form] = Form.useForm();
   const [autoRefresh, setAutoRefresh] = useState(true);
 
@@ -59,18 +61,18 @@ export function TaskDetailPage() {
         <Space style={{ width: '100%', justifyContent: 'space-between' }} wrap>
           <div>
             <Typography.Title level={3} style={{ marginTop: 0, marginBottom: 4 }}>
-              Task Detail
+              {t('taskDetail.title')}
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              Inspect ingest, batch-import, or reparse work, keep active tasks refreshing, and jump back to the owning document or filtered task list.
+              {t('taskDetail.subtitle')}
             </Typography.Paragraph>
           </div>
           <Space wrap>
-            <Link to="/tasks">Back to task center</Link>
-            <Typography.Text type="secondary">Auto refresh</Typography.Text>
+            <Link to="/tasks">{t('taskDetail.backToCenter')}</Link>
+            <Typography.Text type="secondary">{t('common.autoRefresh')}</Typography.Text>
             <Switch checked={autoRefresh} onChange={setAutoRefresh} />
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
-              Refresh
+              {t('common.refresh')}
             </Button>
           </Space>
         </Space>
@@ -80,8 +82,8 @@ export function TaskDetailPage() {
         <Alert
           type="info"
           showIcon
-          message="This task is still active"
-          description="Auto refresh stays enabled while the task is pending or running so you can watch status changes without leaving the page."
+          message={t('taskDetail.activeMessage')}
+          description={t('taskDetail.activeDescription')}
         />
       )}
 
@@ -89,12 +91,12 @@ export function TaskDetailPage() {
         <Alert
           type="warning"
           showIcon
-          message="Task needs follow-up"
+          message={t('taskDetail.failedFollowup')}
           description={
             <Space wrap>
-              <Typography.Text>{task.errorMessage || 'The task finished with an error.'}</Typography.Text>
-              <Link to={`/documents/${task.documentId}`}>Open document</Link>
-              <Link to={`/tasks?documentId=${task.documentId}&status=failed`}>Open failed tasks for this document</Link>
+              <Typography.Text>{task.errorMessage || t('taskDetail.failedFallback')}</Typography.Text>
+              <Link to={`/documents/${task.documentId}`}>{t('documents.openDocument')}</Link>
+              <Link to={`/tasks?documentId=${task.documentId}&status=failed`}>{t('taskDetail.openFailedDocumentTasks')}</Link>
             </Space>
           }
         />
@@ -104,19 +106,19 @@ export function TaskDetailPage() {
         <Alert
           type="info"
           showIcon
-          message="Batch import follow-up"
+          message={t('taskDetail.batchFollowup')}
           description={
             <Space wrap>
-              <Typography.Text>Track other tasks from the same source:</Typography.Text>
+              <Typography.Text>{t('taskDetail.trackSameSource')}</Typography.Text>
               <Link to={`/tasks?taskType=batch_import&sourceKeyword=${encodeURIComponent(task.sourceUri)}`}>
-                Open same-source batch tasks
+                {t('taskDetail.openSameSource')}
               </Link>
             </Space>
           }
         />
       )}
 
-      <Card className="page-card" title="Lookup another task">
+      <Card className="page-card" title={t('taskDetail.lookup')}>
         <Form
           form={form}
           layout="inline"
@@ -127,25 +129,25 @@ export function TaskDetailPage() {
             }
           }}
         >
-          <Form.Item name="taskId" label="Task ID" rules={[{ required: true, message: 'Please enter a task ID' }]}>
-            <Input style={{ width: 360 }} placeholder="44444444-4444-4444-4444-444444444444" />
+          <Form.Item name="taskId" label={t('taskDetail.taskId')} rules={[{ required: true, message: t('taskDetail.taskIdRequired') }]}>
+            <Input style={{ width: 360 }} placeholder={t('taskDetail.taskIdPlaceholder')} />
           </Form.Item>
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
-            Open
+            {t('common.open')}
           </Button>
-          <Button onClick={() => navigate('/tasks')}>Open task center</Button>
+          <Button onClick={() => navigate('/tasks')}>{t('taskDetail.openTaskCenter')}</Button>
         </Form>
       </Card>
 
-      <Card className="page-card" title="Task state" loading={query.isLoading}>
-        <Typography.Paragraph type="secondary">Task ID: {taskId || '-'}</Typography.Paragraph>
+      <Card className="page-card" title={t('taskDetail.taskState')} loading={query.isLoading}>
+        <Typography.Paragraph type="secondary">{t('taskDetail.idLine', { value: taskId || '-' })}</Typography.Paragraph>
         {query.error && (
           <Alert
             style={{ marginBottom: 16 }}
             type="error"
             showIcon
-            message="Failed to load task"
-            description={query.error instanceof Error ? query.error.message : 'Request failed'}
+            message={t('taskDetail.loadFailed')}
+            description={query.error instanceof Error ? query.error.message : t('common.loadingFailed')}
           />
         )}
         {task && (
@@ -153,31 +155,31 @@ export function TaskDetailPage() {
             <Space wrap style={{ marginBottom: 16 }}>
               <Tag color={getTaskStatusColor(task.status)}>{task.status || 'unknown'}</Tag>
               <Tag>{task.taskType || 'unknown'}</Tag>
-              {task.documentId && <Link to={`/documents/${task.documentId}`}>Open document</Link>}
-              {task.documentId && <Link to={`/tasks?documentId=${task.documentId}`}>Open document tasks</Link>}
-              {task.taskType && <Link to={`/tasks?taskType=${task.taskType}`}>Open {task.taskType} tasks</Link>}
-              {task.status && <Link to={`/tasks?status=${task.status}`}>Open {task.status} tasks</Link>}
+              {task.documentId && <Link to={`/documents/${task.documentId}`}>{t('documents.openDocument')}</Link>}
+              {task.documentId && <Link to={`/tasks?documentId=${task.documentId}`}>{t('taskDetail.openDocumentTasks')}</Link>}
+              {task.taskType && <Link to={`/tasks?taskType=${task.taskType}`}>{t('taskDetail.openTypeTasks', { value: task.taskType })}</Link>}
+              {task.status && <Link to={`/tasks?status=${task.status}`}>{t('taskDetail.openStatusTasks', { value: task.status })}</Link>}
             </Space>
 
             <Descriptions bordered column={1}>
-              <Descriptions.Item label="Task type">{task.taskType}</Descriptions.Item>
-              <Descriptions.Item label="Status">
+              <Descriptions.Item label={t('tasks.taskType')}>{task.taskType}</Descriptions.Item>
+              <Descriptions.Item label={t('common.status')}>
                 <Tag color={getTaskStatusColor(task.status)}>{task.status || 'unknown'}</Tag>
               </Descriptions.Item>
-              <Descriptions.Item label="Current step">{task.step || '-'}</Descriptions.Item>
-              <Descriptions.Item label="Retry count">{task.retryCount}</Descriptions.Item>
-              <Descriptions.Item label="Source URI">
+              <Descriptions.Item label={t('taskDetail.currentStep')}>{task.step || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('taskDetail.retryCount')}>{task.retryCount}</Descriptions.Item>
+              <Descriptions.Item label={t('common.sourceUri')}>
                 <Typography.Text copyable={Boolean(task.sourceUri)}>{task.sourceUri || '-'}</Typography.Text>
               </Descriptions.Item>
-              <Descriptions.Item label="Document">
+              <Descriptions.Item label={t('common.document')}>
                 {task.documentId ? <Link to={`/documents/${task.documentId}`}>{task.documentId}</Link> : '-'}
               </Descriptions.Item>
-              <Descriptions.Item label="Version ID">{task.versionId || '-'}</Descriptions.Item>
-              <Descriptions.Item label="Created at">{formatDateTime(task.createdAt)}</Descriptions.Item>
-              <Descriptions.Item label="Updated at">{formatDateTime(task.updatedAt)}</Descriptions.Item>
-              <Descriptions.Item label="Started at">{formatDateTime(task.startedAt)}</Descriptions.Item>
-              <Descriptions.Item label="Finished at">{formatDateTime(task.finishedAt)}</Descriptions.Item>
-              <Descriptions.Item label="Error message">{task.errorMessage || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('taskDetail.versionId')}>{task.versionId || '-'}</Descriptions.Item>
+              <Descriptions.Item label={t('common.createdAt')}>{formatDateTime(task.createdAt)}</Descriptions.Item>
+              <Descriptions.Item label={t('common.updatedAt')}>{formatDateTime(task.updatedAt)}</Descriptions.Item>
+              <Descriptions.Item label={t('taskDetail.startedAt')}>{formatDateTime(task.startedAt)}</Descriptions.Item>
+              <Descriptions.Item label={t('taskDetail.finishedAt')}>{formatDateTime(task.finishedAt)}</Descriptions.Item>
+              <Descriptions.Item label={t('taskDetail.errorMessage')}>{task.errorMessage || '-'}</Descriptions.Item>
             </Descriptions>
           </>
         )}
@@ -187,7 +189,7 @@ export function TaskDetailPage() {
             style={{ marginTop: 16 }}
             type="error"
             showIcon
-            message="Task reported an error"
+            message={t('taskDetail.reportedError')}
             description={task.errorMessage}
           />
         )}
