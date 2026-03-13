@@ -232,13 +232,20 @@ test.describe('rag-hub core regression', () => {
     await page.getByRole('button', { name: 'Submit import' }).click();
 
     await expect(page.getByText('Batch import request submitted')).toBeVisible();
-    const taskLink = page.locator('a[href^="/tasks/"]').filter({ hasText: 'Open task' }).last();
+    await expect(page.getByRole('link', { name: 'Open same-source tasks' })).toBeVisible();
+    await page.getByRole('link', { name: 'Open same-source tasks' }).click();
+    await expect(page).toHaveURL(/taskType=batch_import/);
+    await expect(page).toHaveURL(/sourceKeyword=s3%3A%2F%2Fplaywright%2Fpolicies/);
+    await expect(page.getByRole('table')).toContainText('s3://playwright/policies');
+
+    const taskLink = page.locator('a[href^="/tasks/"]').first();
     await expect(taskLink).toBeVisible();
     await taskLink.click();
 
     await expect(page).toHaveURL(/\/tasks\//);
     await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
     await expect(page.getByText('batch_import', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Batch import follow-up')).toBeVisible();
   });
 
   test('empty file upload shows a stable failure prompt', async ({ page }) => {

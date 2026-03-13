@@ -23,6 +23,7 @@ Latest verified result:
 - search
 - QA
 - task center and task detail
+- batch-import same-source follow-up
 - query logs and detail
 - upload
 - batch import

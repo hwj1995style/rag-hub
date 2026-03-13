@@ -33,7 +33,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public PageResponse<TaskResponse> listTasks(String status, String taskType, String documentId, Integer pageNo, Integer pageSize) {
+    public PageResponse<TaskResponse> listTasks(String status, String taskType, String documentId, String sourceKeyword, Integer pageNo, Integer pageSize) {
         int currentPage = pageNo == null ? 1 : pageNo;
         int currentSize = pageSize == null ? 20 : pageSize;
         Specification<KbIngestTask> spec = Specification.where(null);
@@ -46,6 +46,10 @@ public class TaskServiceImpl implements TaskService {
         if (documentId != null && !documentId.isBlank()) {
             UUID docId = UUID.fromString(documentId);
             spec = spec.and((root, query, cb) -> cb.equal(root.get("documentId"), docId));
+        }
+        if (sourceKeyword != null && !sourceKeyword.isBlank()) {
+            String keyword = "%" + sourceKeyword.trim() + "%";
+            spec = spec.and((root, query, cb) -> cb.like(root.get("sourceUri"), keyword));
         }
         var page = taskRepository.findAll(
                 spec,

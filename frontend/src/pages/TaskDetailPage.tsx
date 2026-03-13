@@ -51,6 +51,7 @@ export function TaskDetailPage() {
   const task = query.data;
   const isActive = Boolean(task?.status && ACTIVE_TASK_STATUSES.has(task.status));
   const isFailed = task?.status === 'failed';
+  const isBatchImport = task?.taskType === 'batch_import';
 
   return (
     <div className="content-stack">
@@ -94,6 +95,22 @@ export function TaskDetailPage() {
               <Typography.Text>{task.errorMessage || 'The task finished with an error.'}</Typography.Text>
               <Link to={`/documents/${task.documentId}`}>Open document</Link>
               <Link to={`/tasks?documentId=${task.documentId}&status=failed`}>Open failed tasks for this document</Link>
+            </Space>
+          }
+        />
+      )}
+
+      {isBatchImport && task?.sourceUri && (
+        <Alert
+          type="info"
+          showIcon
+          message="Batch import follow-up"
+          description={
+            <Space wrap>
+              <Typography.Text>Track other tasks from the same source:</Typography.Text>
+              <Link to={`/tasks?taskType=batch_import&sourceKeyword=${encodeURIComponent(task.sourceUri)}`}>
+                Open same-source batch tasks
+              </Link>
             </Space>
           }
         />

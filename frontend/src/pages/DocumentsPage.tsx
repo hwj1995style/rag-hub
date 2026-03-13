@@ -183,6 +183,9 @@ export function DocumentsPage() {
                 <Typography.Text>tasks: {actionState.payload.task_count}</Typography.Text>
                 <Typography.Text>source: {actionState.payload.source_uri}</Typography.Text>
                 <Link to="/tasks?taskType=batch_import">Open batch tasks</Link>
+                <Link to={`/tasks?taskType=batch_import&sourceKeyword=${encodeURIComponent(actionState.payload.source_uri)}`}>
+                  Open same-source tasks
+                </Link>
                 {actionState.payload.task_ids[0] && (
                   <Link to={`/tasks/${actionState.payload.task_ids[0]}`}>Open task {actionState.payload.task_ids[0]}</Link>
                 )}

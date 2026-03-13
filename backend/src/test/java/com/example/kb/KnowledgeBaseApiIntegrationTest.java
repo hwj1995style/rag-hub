@@ -219,6 +219,33 @@ class KnowledgeBaseApiIntegrationTest {
     }
 
     @Test
+    void shouldFilterTasksBySourceKeyword() throws Exception {
+        mockMvc.perform(post("/api/documents/batch-import")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "sourceType": "s3",
+                                  "sourceUri": "s3://playwright/policies",
+                                  "bizDomain": "risk",
+                                  "department": "RiskMgmt",
+                                  "securityLevel": "internal"
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/tasks")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .param("taskType", "batch_import")
+                        .param("sourceKeyword", "playwright/policies"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(1)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].taskType", is("batch_import")))
+                .andExpect(jsonPath("$.data.items[0].sourceUri", is("s3://playwright/policies")));
+    }
+
+    @Test
     void shouldReturnQueryLogById() throws Exception {
         mockMvc.perform(get("/api/query-logs/66666666-6666-6666-6666-666666666666")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))

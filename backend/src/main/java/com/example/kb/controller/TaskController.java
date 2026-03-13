@@ -22,9 +22,10 @@ public class TaskController {
     public ApiResponse<Object> listTasks(@RequestParam(required = false) String status,
                                          @RequestParam(required = false) String taskType,
                                          @RequestParam(required = false) String documentId,
+                                         @RequestParam(required = false) String sourceKeyword,
                                          @RequestParam(required = false) Integer pageNo,
                                          @RequestParam(required = false) Integer pageSize) {
-        return ApiResponse.success(taskService.listTasks(status, taskType, documentId, pageNo, pageSize));
+        return ApiResponse.success(taskService.listTasks(status, taskType, documentId, sourceKeyword, pageNo, pageSize));
     }
 
     @GetMapping("/{taskId}")

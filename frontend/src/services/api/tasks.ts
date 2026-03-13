@@ -5,6 +5,7 @@ export type ListTasksParams = {
   status?: string;
   taskType?: string;
   documentId?: string;
+  sourceKeyword?: string;
   pageNo?: number;
   pageSize?: number;
 };

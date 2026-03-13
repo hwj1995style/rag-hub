@@ -25,6 +25,7 @@ The repository now uses these deployment rules:
 - `docs/knowledge-base-deployment-docker.md`
 - `docs/knowledge-base-deployment-host-linux.md`
 - `docs/knowledge-base-document-permission-design.md`
+- `docs/knowledge-base-batch-import-followup-design.md`
 - `docs/knowledge-base-test-cases.md`
 
 ## Frontend status
@@ -133,6 +134,7 @@ The current WSL Playwright suite covers:
 - search
 - QA
 - task center and task detail
+- batch-import same-source follow-up
 - query logs and detail
 - upload
 - batch import

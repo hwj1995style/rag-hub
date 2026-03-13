@@ -68,6 +68,7 @@ export function TasksPage() {
   const status = searchParams.get('status') ?? undefined;
   const taskType = searchParams.get('taskType') ?? undefined;
   const documentId = searchParams.get('documentId') ?? undefined;
+  const sourceKeyword = searchParams.get('sourceKeyword') ?? undefined;
   const pageNo = toPositiveInt(searchParams.get('pageNo'), 1);
   const pageSize = toPositiveInt(searchParams.get('pageSize'), 20);
   const autoRefresh = searchParams.get('autoRefresh') === 'true';
@@ -77,13 +78,14 @@ export function TasksPage() {
       status,
       taskType,
       documentId: documentId ?? '',
+      sourceKeyword: sourceKeyword ?? '',
       autoRefresh,
     });
-  }, [autoRefresh, documentId, form, status, taskType]);
+  }, [autoRefresh, documentId, form, sourceKeyword, status, taskType]);
 
   const query = useQuery({
-    queryKey: ['tasks', status, taskType, documentId, pageNo, pageSize],
-    queryFn: () => listTasks({ status, taskType, documentId, pageNo, pageSize }),
+    queryKey: ['tasks', status, taskType, documentId, sourceKeyword, pageNo, pageSize],
+    queryFn: () => listTasks({ status, taskType, documentId, sourceKeyword, pageNo, pageSize }),
     refetchInterval: autoRefresh ? 10_000 : false,
   });
 
@@ -172,6 +174,7 @@ export function TasksPage() {
         status,
         taskType,
         documentId,
+        sourceKeyword,
         pageNo: 1,
         pageSize,
         autoRefresh,
@@ -180,11 +183,12 @@ export function TasksPage() {
     );
   };
 
-  const handleApply = (values: { status?: string; taskType?: string; documentId?: string; autoRefresh?: boolean }) => {
+  const handleApply = (values: { status?: string; taskType?: string; documentId?: string; sourceKeyword?: string; autoRefresh?: boolean }) => {
     updateFilters({
       status: values.status,
       taskType: values.taskType,
       documentId: values.documentId?.trim(),
+      sourceKeyword: values.sourceKeyword?.trim(),
       autoRefresh: values.autoRefresh,
     });
   };
@@ -200,6 +204,7 @@ export function TasksPage() {
         status,
         taskType,
         documentId,
+        sourceKeyword,
         autoRefresh,
         pageNo: pagination.current ?? 1,
         pageSize: pagination.pageSize ?? pageSize,
@@ -274,7 +279,7 @@ export function TasksPage() {
         <Form
           form={form}
           layout="inline"
-          initialValues={{ status: undefined, taskType: undefined, documentId: '', autoRefresh }}
+          initialValues={{ status: undefined, taskType: undefined, documentId: '', sourceKeyword: '', autoRefresh }}
           onFinish={handleApply}
         >
           <Form.Item name="status" label="Status">
@@ -303,6 +308,9 @@ export function TasksPage() {
           <Form.Item name="documentId" label="Document ID">
             <Input allowClear style={{ width: 320 }} placeholder="11111111-1111-1111-1111-111111111111" />
           </Form.Item>
+          <Form.Item name="sourceKeyword" label="Source URI contains">
+            <Input allowClear style={{ width: 320 }} placeholder="s3://bucket/path" />
+          </Form.Item>
           <Form.Item name="autoRefresh" label="Auto refresh" valuePropName="checked">
             <Switch />
           </Form.Item>
@@ -311,11 +319,12 @@ export function TasksPage() {
           </Button>
           <Button onClick={handleReset}>Reset</Button>
         </Form>
-        {(documentId || status || taskType) && (
+        {(documentId || status || taskType || sourceKeyword) && (
           <Space wrap style={{ marginTop: 16 }}>
             {documentId && <Link to={`/documents/${documentId}`}>Open document {documentId}</Link>}
             {status && <Tag color={getTaskStatusColor(status)}>{status}</Tag>}
             {taskType && <Tag>{taskType}</Tag>}
+            {sourceKeyword && <Tag color="blue">{sourceKeyword}</Tag>}
             <Link to="/tasks">Open full task feed</Link>
           </Space>
         )}

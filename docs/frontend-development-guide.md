@@ -21,6 +21,7 @@ Implemented pages:
 - task center
 - task detail
 - query logs and detail
+- permissions governance (load current policies, delete single policy)
 
 Implemented management actions:
 - upload
@@ -127,7 +128,9 @@ Covered flows:
 - search
 - QA
 - task center and task detail
+- batch-import same-source task follow-up
 - query logs and detail
+- permissions governance (load current policies, delete single policy)
 - upload
 - batch import
 - reparse
