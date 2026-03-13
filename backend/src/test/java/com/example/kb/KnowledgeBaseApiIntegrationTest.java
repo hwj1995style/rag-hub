@@ -2,6 +2,7 @@ package com.example.kb;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -338,6 +339,74 @@ class KnowledgeBaseApiIntegrationTest {
     }
 
     @Test
+    void shouldListBoundPermissionPolicies() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "admin", "effect": "allow"},
+                                    {"subjectType": "user", "subjectValue": "viewer", "effect": "deny"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/permissions")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .param("resourceType", "document")
+                        .param("resourceId", "11111111-1111-1111-1111-111111111111"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.resourceType", is("document")))
+                .andExpect(jsonPath("$.data.resourceId", is("11111111-1111-1111-1111-111111111111")))
+                .andExpect(jsonPath("$.data.items", hasSize(2)))
+                .andExpect(jsonPath("$.data.items[0].policyId").isString());
+    }
+
+    @Test
+    void shouldDeleteSinglePermissionPolicy() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "admin", "effect": "allow"},
+                                    {"subjectType": "user", "subjectValue": "viewer", "effect": "deny"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/api/permissions")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .param("resourceType", "document")
+                        .param("resourceId", "11111111-1111-1111-1111-111111111111"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode items = objectMapper.readTree(result.getResponse().getContentAsString()).path("data").path("items");
+        String policyId = items.get(0).path("policyId").asText();
+
+        mockMvc.perform(delete("/api/permissions/" + policyId)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.policyId", is(policyId)));
+
+        mockMvc.perform(get("/api/permissions")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .param("resourceType", "document")
+                        .param("resourceId", "11111111-1111-1111-1111-111111111111"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.items", hasSize(1)));
+    }
+
+    @Test
     void shouldRejectPermissionBindingForNonAdmin() throws Exception {
         mockMvc.perform(post("/api/permissions/bind")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123"))
@@ -349,6 +418,38 @@ class KnowledgeBaseApiIntegrationTest {
                                   "policies": []
                                 }
                                 """))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code", is("KB-40301")));
+    }
+
+    @Test
+    void shouldRejectPermissionDeleteForNonAdmin() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "admin", "effect": "allow"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        MvcResult result = mockMvc.perform(get("/api/permissions")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .param("resourceType", "document")
+                        .param("resourceId", "11111111-1111-1111-1111-111111111111"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        String policyId = objectMapper.readTree(result.getResponse().getContentAsString())
+                .path("data").path("items").get(0).path("policyId").asText();
+
+        mockMvc.perform(delete("/api/permissions/" + policyId)
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123")))
                 .andExpect(status().isForbidden())
                 .andExpect(jsonPath("$.code", is("KB-40301")));
     }

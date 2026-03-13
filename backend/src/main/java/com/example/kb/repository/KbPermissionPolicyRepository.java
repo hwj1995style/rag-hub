@@ -11,6 +11,8 @@ import org.springframework.data.repository.query.Param;
 public interface KbPermissionPolicyRepository extends JpaRepository<KbPermissionPolicy, UUID> {
     List<KbPermissionPolicy> findByResourceTypeAndResourceId(String resourceType, UUID resourceId);
 
+    List<KbPermissionPolicy> findByResourceTypeAndResourceIdOrderByCreatedAtDesc(String resourceType, UUID resourceId);
+
     @Modifying
     @Query("delete from KbPermissionPolicy policy where policy.resourceType = :resourceType and policy.resourceId = :resourceId")
     void deleteByResourceTypeAndResourceId(@Param("resourceType") String resourceType, @Param("resourceId") UUID resourceId);

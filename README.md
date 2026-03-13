@@ -45,7 +45,7 @@ Current pages:
 - Chunk browser
 - Search workbench
 - QA workbench
-- Permission binding
+- Permission binding governance
 - Task center
 - Task detail
 - Query logs and detail
@@ -138,7 +138,7 @@ The current WSL Playwright suite covers:
 - batch import
 - reparse
 - activate
-- permission binding
+- permission governance (load, bind, delete single policy)
 - failure states for upload/search/QA/permission binding
 - missing task and missing query log states
 - viewer 403

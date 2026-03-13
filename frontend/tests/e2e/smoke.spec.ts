@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { login, mockJsonError, seedInvalidSession, seedViewerSession } from './helpers';
+import { login, mockJsonError, seedInvalidSession } from './helpers';
 
 const seededDocumentId = '11111111-1111-1111-1111-111111111111';
 const currentVersionId = '22222222-2222-2222-2222-222222222222';
@@ -310,12 +310,36 @@ test.describe('rag-hub core regression', () => {
     const responsePromise = page.waitForResponse(
       (response) => response.url().includes('/api/permissions/bind') && response.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.getByRole('button', { name: 'Submit policy set' }).click();
     const response = await responsePromise;
     expect(response.ok()).toBeTruthy();
     const payload = await response.json();
     expect(payload.code).toBe('KB-00000');
     expect(payload.data.policy_count).toBeGreaterThanOrEqual(1);
+  });
+
+  test('admin can load and delete a single permission policy', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/permissions');
+    await expect(page.getByText('Permission Binding')).toBeVisible();
+    await page.locator('.ant-select-selector').nth(0).click();
+    await page.getByTitle('user').click();
+    await page.getByLabel('Subject value').first().fill('playwright-delete-check');
+    await page.locator('.ant-select-selector').nth(1).click();
+    await page.getByTitle('deny').click();
+    await page.getByRole('button', { name: 'Submit policy set' }).click();
+
+    await expect(page.getByText('Stored 1 policies').first()).toBeVisible();
+    await expect(page.getByRole('table')).toContainText('playwright-delete-check');
+
+    const row = page.locator('tr').filter({ hasText: 'playwright-delete-check' }).first();
+    await expect(row).toBeVisible();
+    await row.getByRole('button', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Delete' }).last().click();
+
+    await expect(page.getByText('Policy deleted').first()).toBeVisible();
+    await expect(page.getByRole('table')).not.toContainText('playwright-delete-check');
   });
 
   test('permission binding shows an inline failure prompt when the backend rejects the request', async ({ page }) => {
@@ -327,7 +351,7 @@ test.describe('rag-hub core regression', () => {
     const responsePromise = page.waitForResponse(
       (response) => response.url().includes('/api/permissions/bind') && response.request().method() === 'POST',
     );
-    await page.getByRole('button', { name: 'Submit' }).click();
+    await page.getByRole('button', { name: 'Submit policy set' }).click();
     await responsePromise;
 
     await expect(page.getByText('permission store unavailable').first()).toBeVisible({ timeout: 10000 });
@@ -352,7 +376,7 @@ test.describe('rag-hub core regression', () => {
   });
 
   test('viewer role is blocked from the permissions form', async ({ page }) => {
-    await seedViewerSession(page);
+    await login(page, 'viewer', 'viewer123');
     await page.goto('/permissions');
 
     await expect(page.getByRole('heading', { name: 'Permission denied' })).toBeVisible();

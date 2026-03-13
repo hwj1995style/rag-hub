@@ -14,7 +14,7 @@ wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwr
 ```
 
 Latest verified result:
-- `25 passed`
+- `29 passed`
 
 ## Covered flows
 
@@ -28,7 +28,7 @@ Latest verified result:
 - batch import
 - reparse
 - activate
-- permission binding
+- permission governance (bind, load list, delete single policy)
 - inline failure states for search, QA, upload, and permission binding
 - missing task and missing query log errors
 - viewer 403

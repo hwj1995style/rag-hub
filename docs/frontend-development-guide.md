@@ -17,7 +17,7 @@ Implemented pages:
 - chunks
 - search
 - QA
-- permission binding
+- permission governance (load current policies, bind policy set, delete single policy)
 - task center
 - task detail
 - query logs and detail
@@ -27,7 +27,7 @@ Implemented management actions:
 - batch import
 - reparse
 - activate
-- permission binding
+- permission governance (load current policies, bind policy set, delete single policy)
 
 ## Frontend project structure
 
@@ -119,7 +119,7 @@ wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwr
 ## Current regression result
 
 Latest verified result:
-- `25 passed`
+- `29 passed`
 
 Covered flows:
 - login
@@ -132,7 +132,7 @@ Covered flows:
 - batch import
 - reparse
 - activate
-- permission binding
+- permission governance (load current policies, bind policy set, delete single policy)
 - major inline failure states
 - viewer 403
 - invalid token 401 redirect

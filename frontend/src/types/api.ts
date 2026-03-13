@@ -1,4 +1,4 @@
-﻿export type ApiEnvelope<T> = { code: string; message: string; traceId: string; data: T; };
+export type ApiEnvelope<T> = { code: string; message: string; traceId: string; data: T; };
 export type LoginResponse = { tokenType: string; accessToken: string; expiresInSeconds: number; user: { userId: string; username: string; displayName: string; roleCode: string; }; };
 export type PageResponse<T> = { total: number; pageNo: number; pageSize: number; items: T[]; };
 export type DocumentListItem = { documentId: string; title: string; bizDomain: string; department: string; status: string; currentVersionId: string; updatedAt: string; };
@@ -14,3 +14,6 @@ export type QueryLogDetail = { log_id: string; query_text: string; rewritten_que
 export type PermissionBindResponse = { resource_type: string; resource_id: string; policy_count: number; };
 export type UploadResponse = { document_id: string; version_id: string; task_id: string; status: string; };
 export type BatchImportResponse = { batch_id: string; task_count: number; accepted_count: number; source_uri: string; source_type: string; task_ids: string[]; };
+export type PermissionPolicyItem = { policyId: string; resourceType: string; resourceId: string; subjectType: string; subjectValue: string; effect: string; createdAt: string | null; };
+export type PermissionPolicyListResponse = { resourceType: string; resourceId: string; items: PermissionPolicyItem[]; };
+export type PermissionDeleteResponse = { policyId: string; status: string; };
