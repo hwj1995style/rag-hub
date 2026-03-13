@@ -15,5 +15,5 @@ export type PermissionBindResponse = { resource_type: string; resource_id: strin
 export type UploadResponse = { document_id: string; version_id: string; task_id: string; status: string; };
 export type BatchImportResponse = { batch_id: string; task_count: number; accepted_count: number; source_uri: string; source_type: string; task_ids: string[]; };
 export type PermissionPolicyItem = { policyId: string; resourceType: string; resourceId: string; subjectType: string; subjectValue: string; effect: string; createdAt: string | null; };
-export type PermissionPolicyListResponse = { resourceType: string; resourceId: string; items: PermissionPolicyItem[]; };
+export type PermissionPolicyListResponse = { resourceType: string | null; resourceId: string | null; subjectType: string | null; subjectValue: string | null; effect: string | null; items: PermissionPolicyItem[]; };
 export type PermissionDeleteResponse = { policyId: string; status: string; };

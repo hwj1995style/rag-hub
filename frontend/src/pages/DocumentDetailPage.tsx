@@ -107,6 +107,11 @@ export function DocumentDetailPage() {
             <Typography.Text type="secondary">{documentId}</Typography.Text>
           </div>
           <Space>
+            {isAdmin(roleCode) && (
+              <Link to={`/permissions?resourceType=document&resourceId=${documentId}`}>
+                <Button>Manage permissions</Button>
+              </Link>
+            )}
             <Link to={`/documents/${documentId}/chunks`}>
               <Button icon={<PartitionOutlined />}>All chunks</Button>
             </Link>

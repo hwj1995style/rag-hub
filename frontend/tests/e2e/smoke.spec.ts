@@ -17,6 +17,17 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByText(currentVersionId)).toBeVisible();
   });
 
+
+  test('admin can jump from document detail into permission governance', async ({ page }) => {
+    await login(page);
+
+    await page.goto(`/documents/${seededDocumentId}`);
+    await page.getByText('Manage permissions').click();
+
+    await expect(page).toHaveURL(new RegExp(`/permissions\?resourceType=document&resourceId=${seededDocumentId}`.replace(/\?/g, '\\?')));
+    await expect(page.getByText(`resource=document:${seededDocumentId}`)).toBeVisible();
+  });
+
   test('search workbench returns search results', async ({ page }) => {
     await login(page);
 
@@ -330,14 +341,15 @@ test.describe('rag-hub core regression', () => {
 
     await page.goto('/permissions');
     await expect(page.getByText('Permission Binding')).toBeVisible();
-    await page.locator('.ant-select-selector').nth(0).click();
-    await page.getByTitle('user').click();
-    await page.getByLabel('Subject value').first().fill('playwright-delete-check');
-    await page.locator('.ant-select-selector').nth(1).click();
-    await page.getByTitle('deny').click();
+    await page.getByTestId('policy-row-subject-type-0').locator('.ant-select-selector').click();
+    await page.locator('.ant-select-dropdown:visible [title="user"]').click();
+    await page.getByTestId('policy-row-subject-value-0').fill('playwright-delete-check');
+    await page.getByTestId('policy-row-effect-0').locator('.ant-select-selector').click();
+    await page.locator('.ant-select-dropdown:visible [title="deny"]').click();
     await page.getByRole('button', { name: 'Submit policy set' }).click();
 
     await expect(page.getByText('Stored 1 policies').first()).toBeVisible();
+    await page.getByRole('button', { name: 'Load policies' }).click();
     await expect(page.getByRole('table')).toContainText('playwright-delete-check');
 
     const row = page.locator('tr').filter({ hasText: 'playwright-delete-check' }).first();
@@ -347,6 +359,30 @@ test.describe('rag-hub core regression', () => {
 
     await expect(page.getByText('Policy deleted').first()).toBeVisible();
     await expect(page.getByRole('table')).not.toContainText('playwright-delete-check');
+  });
+
+
+  test('admin can query permission policies from the subject view', async ({ page }) => {
+    await login(page);
+
+    await page.goto(`/permissions?resourceType=document&resourceId=${seededDocumentId}`);
+    await page.getByTestId('policy-row-subject-type-0').locator('.ant-select-selector').click();
+    await page.locator('.ant-select-dropdown:visible [title="role"]').click();
+    await page.getByTestId('policy-row-subject-value-0').fill('playwright-subject-view');
+    await page.getByTestId('policy-row-effect-0').locator('.ant-select-selector').click();
+    await page.locator('.ant-select-dropdown:visible [title="allow"]').click();
+    await page.getByRole('button', { name: 'Submit policy set' }).click();
+    await expect(page.getByText('Stored 1 policies').first()).toBeVisible();
+
+    await page.getByTestId('permission-filter-subject-type').locator('.ant-select-selector').click();
+    await page.locator('.ant-select-dropdown:visible [title="role"]').click();
+    await page.getByTestId('permission-filter-subject-value').fill('playwright-subject-view');
+    await page.getByRole('button', { name: 'Load policies' }).click();
+
+    await expect(page).toHaveURL(/subjectType=role/);
+    await expect(page).toHaveURL(/subjectValue=playwright-subject-view/);
+    await expect(page.getByText('subject=role:playwright-subject-view')).toBeVisible();
+    await expect(page.getByRole('table')).toContainText('playwright-subject-view');
   });
 
   test('permission binding shows an inline failure prompt when the backend rejects the request', async ({ page }) => {

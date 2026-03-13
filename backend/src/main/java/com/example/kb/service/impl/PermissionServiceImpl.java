@@ -42,14 +42,40 @@ public class PermissionServiceImpl implements PermissionService {
 
     @Override
     @Transactional(readOnly = true)
-    public PermissionPolicyListResponse listPolicies(String resourceType, String resourceId) {
-        UUID parsedResourceId = UUID.fromString(resourceId);
+    public PermissionPolicyListResponse listPolicies(
+            String resourceType,
+            String resourceId,
+            String subjectType,
+            String subjectValue,
+            String effect
+    ) {
+        String normalizedResourceType = normalize(resourceType);
+        String normalizedResourceId = normalize(resourceId);
+        String normalizedSubjectType = normalize(subjectType);
+        String normalizedSubjectValue = normalize(subjectValue);
+        String normalizedEffect = normalize(effect);
+        validateFilters(normalizedResourceType, normalizedResourceId, normalizedSubjectType, normalizedSubjectValue);
+
+        UUID parsedResourceId = normalizedResourceId == null ? null : UUID.fromString(normalizedResourceId);
         List<PermissionPolicyResponse> items = permissionPolicyRepository
-                .findByResourceTypeAndResourceIdOrderByCreatedAtDesc(resourceType, parsedResourceId)
+                .searchPolicies(
+                        normalizedResourceType,
+                        parsedResourceId,
+                        normalizedSubjectType,
+                        normalizedSubjectValue,
+                        normalizedEffect
+                )
                 .stream()
                 .map(this::toResponse)
                 .toList();
-        return new PermissionPolicyListResponse(resourceType, resourceId, items);
+        return new PermissionPolicyListResponse(
+                normalizedResourceType,
+                normalizedResourceId,
+                normalizedSubjectType,
+                normalizedSubjectValue,
+                normalizedEffect,
+                items
+        );
     }
 
     @Override
@@ -82,5 +108,32 @@ public class PermissionServiceImpl implements PermissionService {
                 policy.getEffect(),
                 policy.getCreatedAt() == null ? null : policy.getCreatedAt().toString()
         );
+    }
+
+    private void validateFilters(
+            String resourceType,
+            String resourceId,
+            String subjectType,
+            String subjectValue
+    ) {
+        boolean hasResourcePair = resourceType != null || resourceId != null;
+        boolean hasSubjectPair = subjectType != null || subjectValue != null;
+        if (!hasResourcePair && !hasSubjectPair) {
+            throw new IllegalArgumentException("either resource filters or subject filters are required");
+        }
+        if ((resourceType == null) != (resourceId == null)) {
+            throw new IllegalArgumentException("resourceType and resourceId must be provided together");
+        }
+        if ((subjectType == null) != (subjectValue == null)) {
+            throw new IllegalArgumentException("subjectType and subjectValue must be provided together");
+        }
+    }
+
+    private String normalize(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value.trim();
+        return normalized.isEmpty() ? null : normalized;
     }
 }

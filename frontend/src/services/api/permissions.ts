@@ -1,6 +1,14 @@
 import { request } from '../http/client';
 import type { PermissionBindResponse, PermissionDeleteResponse, PermissionPolicyListResponse } from '../../types/api';
 
+export type PermissionListParams = {
+  resourceType?: string;
+  resourceId?: string;
+  subjectType?: string;
+  subjectValue?: string;
+  effect?: string;
+};
+
 export function bindPermissions(payload: {
   resourceType: string;
   resourceId: string;
@@ -9,7 +17,7 @@ export function bindPermissions(payload: {
   return request<PermissionBindResponse>({ url: '/api/permissions/bind', method: 'POST', data: payload });
 }
 
-export function listPermissions(params: { resourceType: string; resourceId: string }) {
+export function listPermissions(params: PermissionListParams) {
   return request<PermissionPolicyListResponse>({ url: '/api/permissions', method: 'GET', params });
 }
 

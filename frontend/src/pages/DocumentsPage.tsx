@@ -131,6 +131,9 @@ export function DocumentsPage() {
           <Link to={`/documents/${record.documentId}`}>Detail</Link>
           <Link to={`/documents/${record.documentId}/chunks`}>Chunks</Link>
           <Link to={`/tasks?documentId=${record.documentId}`}>Related tasks</Link>
+          {isAdmin(roleCode) && (
+            <Link to={`/permissions?resourceType=document&resourceId=${record.documentId}`}>Permissions</Link>
+          )}
         </Space>
       ),
     },

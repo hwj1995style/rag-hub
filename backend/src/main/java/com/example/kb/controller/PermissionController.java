@@ -31,8 +31,14 @@ public class PermissionController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @GetMapping
-    public ApiResponse<Object> list(@RequestParam String resourceType, @RequestParam String resourceId) {
-        return ApiResponse.success(permissionService.listPolicies(resourceType, resourceId));
+    public ApiResponse<Object> list(
+            @RequestParam(required = false) String resourceType,
+            @RequestParam(required = false) String resourceId,
+            @RequestParam(required = false) String subjectType,
+            @RequestParam(required = false) String subjectValue,
+            @RequestParam(required = false) String effect
+    ) {
+        return ApiResponse.success(permissionService.listPolicies(resourceType, resourceId, subjectType, subjectValue, effect));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
