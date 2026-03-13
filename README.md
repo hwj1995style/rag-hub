@@ -126,6 +126,16 @@ wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwr
 wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && HOST_BASE_URL=http://<host-linux-ip> bash scripts/run_playwright_wsl_host.sh'
 ```
 
+## 中文文档协作约定
+
+为了避免 Windows / PowerShell 环境把中文写坏成 `?`，仓库协作时请遵循：
+- 中文 Markdown 统一按 UTF-8 写入
+- 新的写入路径先做 canary 验证，再批量改文档
+- 优先整文件重写，不在不安全路径里逐行 patch 中文
+- 每批文档修改后做一次乱码校验
+
+更完整的规则见：
+- `AGENTS.md`
 ## 已验证回归范围
 
 当前 WSL Playwright 覆盖：
