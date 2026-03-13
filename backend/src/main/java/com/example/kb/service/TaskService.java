@@ -7,5 +7,6 @@ import java.util.Map;
 public interface TaskService {
     PageResponse<TaskResponse> listTasks(String status, String taskType, String documentId, Integer pageNo, Integer pageSize);
     TaskResponse getTask(String taskId);
+    PageResponse<Map<String, Object>> listQueryLogs(String sessionId, String queryText, Integer pageNo, Integer pageSize);
     Map<String, Object> getQueryLog(String logId);
 }

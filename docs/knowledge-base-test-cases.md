@@ -14,7 +14,7 @@ wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwr
 ```
 
 Latest verified result:
-- `20 passed`
+- `25 passed`
 
 ## Covered flows
 
@@ -23,7 +23,7 @@ Latest verified result:
 - search
 - QA
 - task center and task detail
-- query log detail
+- query logs and detail
 - upload
 - batch import
 - reparse

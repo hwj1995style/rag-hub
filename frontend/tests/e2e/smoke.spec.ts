@@ -28,7 +28,36 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByRole('table')).toContainText('chunk-1');
   });
 
-  test('search workbench shows an inline failure prompt when search backend fails', async ({ page }) => {
+
+  test('viewer sees a permission error on restricted document detail', async ({ page }) => {
+    await login(page, 'viewer', 'viewer123');
+
+    await page.goto(`/documents/${seededDocumentId}`);
+    await expect(page.getByText('Failed to load document')).toBeVisible();
+    await expect(page.getByText('permission denied')).toBeVisible();
+  });
+
+  test('viewer search shows no accessible results for restricted documents', async ({ page }) => {
+    await login(page, 'viewer', 'viewer123');
+
+    await page.goto('/search');
+    await page.getByLabel('Query').fill('business license');
+    await page.getByRole('button', { name: 'Search' }).click();
+
+    await expect(page.getByText('No accessible results')).toBeVisible();
+    await expect(page.getByRole('table')).not.toContainText('chunk-1');
+  });
+
+  test('viewer qa shows no accessible evidence for restricted documents', async ({ page }) => {
+    await login(page, 'viewer', 'viewer123');
+
+    await page.goto('/qa');
+    await page.getByRole('button', { name: 'Ask' }).click();
+
+    await expect(page.getByText('No accessible evidence')).toBeVisible();
+    await expect(page.getByText(/retrievedCount:\s*0/)).toBeVisible();
+    await expect(page.getByRole('table')).not.toContainText('Customer Credit Policy');
+  });  test('search workbench shows an inline failure prompt when search backend fails', async ({ page }) => {
     await login(page);
     await mockJsonError(page, '/api/search/query', 'POST', 503, 'KB-50300', 'search backend unavailable');
 
@@ -132,6 +161,34 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByRole('heading', { name: 'Query Log Detail' })).toBeVisible();
     await expect(page.getByText(sampleQueryLogId)).toBeVisible();
     await expect(page.getByRole('table').nth(1)).toContainText('p12');
+  });
+
+  test('admin can browse the query log list and open a detail record', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/query-logs');
+    await expect(page.getByRole('heading', { name: 'Query Logs' })).toBeVisible();
+    await page.getByLabel('Session ID').fill('frontend-session-001');
+    await page.getByRole('button', { name: 'Apply' }).click();
+    await expect(page).toHaveURL(/sessionId=frontend-session-001/);
+    const logLink = page.locator('table a[href^="/query-logs/"]').first();
+    await expect(logLink).toBeVisible();
+    const href = await logLink.getAttribute('href');
+    expect(href).toBeTruthy();
+    await logLink.click();
+    await expect(page.getByRole('heading', { name: 'Query Log Detail' })).toBeVisible();
+    await expect(page).toHaveURL(/\/query-logs\//);
+  });
+
+  test('qa workbench links into session query logs', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/qa');
+    await page.getByRole('button', { name: 'Ask' }).click();
+    await expect(page.getByRole('link', { name: 'Open session logs' })).toBeVisible();
+    await page.getByRole('link', { name: 'Open session logs' }).click();
+    await expect(page).toHaveURL(/\/query-logs\?sessionId=frontend-session-001/);
+    await expect(page.getByRole('heading', { name: 'Query Logs' })).toBeVisible();
   });
 
   test('admin can upload a document and open the created task', async ({ page }) => {

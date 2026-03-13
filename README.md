@@ -24,6 +24,7 @@ The repository now uses these deployment rules:
 - `docs/knowledge-base-api-spec.md`
 - `docs/knowledge-base-deployment-docker.md`
 - `docs/knowledge-base-deployment-host-linux.md`
+- `docs/knowledge-base-document-permission-design.md`
 - `docs/knowledge-base-test-cases.md`
 
 ## Frontend status
@@ -47,7 +48,7 @@ Current pages:
 - Permission binding
 - Task center
 - Task detail
-- Query log detail
+- Query logs and detail
 
 ## Fixed local release workflow
 
@@ -132,7 +133,7 @@ The current WSL Playwright suite covers:
 - search
 - QA
 - task center and task detail
-- query log detail
+- query logs and detail
 - upload
 - batch import
 - reparse
@@ -144,4 +145,4 @@ The current WSL Playwright suite covers:
 - invalid token 401 redirect
 
 Latest verified result:
-- `20 passed`
+- `25 passed`

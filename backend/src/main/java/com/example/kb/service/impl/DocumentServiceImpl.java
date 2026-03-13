@@ -16,6 +16,7 @@ import com.example.kb.repository.KbChunkRepository;
 import com.example.kb.repository.KbDocumentRepository;
 import com.example.kb.repository.KbDocumentVersionRepository;
 import com.example.kb.repository.KbIngestTaskRepository;
+import com.example.kb.service.DocumentAccessService;
 import com.example.kb.service.DocumentService;
 import com.example.kb.storage.DocumentStorageService;
 import com.example.kb.storage.StoredFile;
@@ -38,17 +39,20 @@ public class DocumentServiceImpl implements DocumentService {
     private final KbIngestTaskRepository taskRepository;
     private final KbChunkRepository chunkRepository;
     private final DocumentStorageService storageService;
+    private final DocumentAccessService documentAccessService;
 
     public DocumentServiceImpl(KbDocumentRepository documentRepository,
                                KbDocumentVersionRepository versionRepository,
                                KbIngestTaskRepository taskRepository,
                                KbChunkRepository chunkRepository,
-                               DocumentStorageService storageService) {
+                               DocumentStorageService storageService,
+                               DocumentAccessService documentAccessService) {
         this.documentRepository = documentRepository;
         this.versionRepository = versionRepository;
         this.taskRepository = taskRepository;
         this.chunkRepository = chunkRepository;
         this.storageService = storageService;
+        this.documentAccessService = documentAccessService;
     }
 
     @Override
@@ -187,6 +191,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Object getDocumentDetail(String documentId) {
         UUID docId = UUID.fromString(documentId);
+        documentAccessService.assertCanAccessDocument(docId);
         KbDocument document = documentRepository.findById(docId).orElseThrow(() -> new NotFoundException("document not found"));
         KbDocumentVersion version = versionRepository.findByDocumentIdAndIsCurrentTrue(docId).orElse(null);
         return Map.of(
@@ -214,6 +219,7 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Object getChunks(String documentId, String versionId, Integer pageNo, String chunkType, Integer pageSize, Integer pageNoNum) {
         UUID docId = UUID.fromString(documentId);
+        documentAccessService.assertCanAccessDocument(docId);
         int currentPage = pageNoNum == null ? 1 : pageNoNum;
         int currentSize = pageSize == null ? 50 : pageSize;
         List<KbChunk> chunks = versionId == null || versionId.isBlank()

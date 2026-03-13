@@ -1,7 +1,7 @@
 import { SearchOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Alert, App, Button, Card, Col, Form, Input, InputNumber, Row, Space, Table, Tag, Typography } from 'antd';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { searchKnowledge } from '../services/api/search';
 import type { SearchItem } from '../types/api';
 
@@ -18,6 +18,11 @@ export function SearchPage() {
       void message.error(error.message);
     },
   });
+
+  const showNoAccessibleResults = useMemo(
+    () => mutation.isSuccess && !queryError && (mutation.data?.total ?? 0) === 0,
+    [mutation.data?.total, mutation.isSuccess, queryError],
+  );
 
   return (
     <div className="content-stack">
@@ -84,6 +89,15 @@ export function SearchPage() {
           onClose={() => setQueryError(null)}
           message="Search failed"
           description={queryError}
+        />
+      )}
+
+      {showNoAccessibleResults && (
+        <Alert
+          type="info"
+          showIcon
+          message="No accessible results"
+          description="Matching documents may be restricted or unavailable for the current account."
         />
       )}
 

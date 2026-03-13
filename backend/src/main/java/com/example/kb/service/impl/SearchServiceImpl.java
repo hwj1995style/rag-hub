@@ -8,12 +8,15 @@ import com.example.kb.repository.KbChunkRepository;
 import com.example.kb.repository.KbDocumentRepository;
 import com.example.kb.search.LexicalSearchClient;
 import com.example.kb.search.VectorSearchClient;
+import com.example.kb.service.DocumentAccessService;
 import com.example.kb.service.SearchService;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 
@@ -24,15 +27,18 @@ public class SearchServiceImpl implements SearchService {
     private final KbDocumentRepository documentRepository;
     private final LexicalSearchClient lexicalSearchClient;
     private final VectorSearchClient vectorSearchClient;
+    private final DocumentAccessService documentAccessService;
 
     public SearchServiceImpl(KbChunkRepository chunkRepository,
                              KbDocumentRepository documentRepository,
                              LexicalSearchClient lexicalSearchClient,
-                             VectorSearchClient vectorSearchClient) {
+                             VectorSearchClient vectorSearchClient,
+                             DocumentAccessService documentAccessService) {
         this.chunkRepository = chunkRepository;
         this.documentRepository = documentRepository;
         this.lexicalSearchClient = lexicalSearchClient;
         this.vectorSearchClient = vectorSearchClient;
+        this.documentAccessService = documentAccessService;
     }
 
     @Override
@@ -51,9 +57,20 @@ public class SearchServiceImpl implements SearchService {
                 .toList();
 
         if (!items.isEmpty()) {
-            return items;
+            return filterAccessibleItems(items);
         }
-        return fallbackSearch(query, limit);
+        return filterAccessibleItems(fallbackSearch(query, limit));
+    }
+
+    private List<SearchItemResponse> filterAccessibleItems(List<SearchItemResponse> items) {
+        Set<UUID> documentIds = items.stream()
+                .map(SearchItemResponse::documentId)
+                .map(UUID::fromString)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        Set<UUID> accessibleIds = documentAccessService.filterAccessibleDocumentIds(documentIds);
+        return items.stream()
+                .filter(item -> accessibleIds.contains(UUID.fromString(item.documentId())))
+                .toList();
     }
 
     private void tryMerge(Map<String, RankedHit> merged, SearchCall searchCall) {

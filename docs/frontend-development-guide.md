@@ -20,7 +20,7 @@ Implemented pages:
 - permission binding
 - task center
 - task detail
-- query log detail
+- query logs and detail
 
 Implemented management actions:
 - upload
@@ -119,7 +119,7 @@ wsl -d Ubuntu -- bash -lc 'cd /mnt/d/Projects/rag-hub && bash scripts/run_playwr
 ## Current regression result
 
 Latest verified result:
-- `20 passed`
+- `25 passed`
 
 Covered flows:
 - login
@@ -127,7 +127,7 @@ Covered flows:
 - search
 - QA
 - task center and task detail
-- query log detail
+- query logs and detail
 - upload
 - batch import
 - reparse

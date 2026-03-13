@@ -28,20 +28,43 @@ public class SecurityBootstrapInitializer implements ApplicationRunner {
 
     @Override
     public void run(ApplicationArguments args) {
-        SecurityProperties.BootstrapAdmin bootstrapAdmin = securityProperties.getBootstrapAdmin();
-        if (!bootstrapAdmin.isEnabled()) {
+        bootstrapAccount(
+                securityProperties.getBootstrapAdmin().isEnabled(),
+                securityProperties.getBootstrapAdmin().getUsername(),
+                securityProperties.getBootstrapAdmin().getPassword(),
+                securityProperties.getBootstrapAdmin().getDisplayName(),
+                securityProperties.getBootstrapAdmin().getRoleCode(),
+                "bootstrap account"
+        );
+        bootstrapAccount(
+                securityProperties.getBootstrapViewer().isEnabled(),
+                securityProperties.getBootstrapViewer().getUsername(),
+                securityProperties.getBootstrapViewer().getPassword(),
+                securityProperties.getBootstrapViewer().getDisplayName(),
+                securityProperties.getBootstrapViewer().getRoleCode(),
+                "bootstrap viewer account"
+        );
+    }
+
+    private void bootstrapAccount(boolean enabled,
+                                  String username,
+                                  String password,
+                                  String displayName,
+                                  String roleCode,
+                                  String label) {
+        if (!enabled) {
             return;
         }
-        if (adminUserRepository.findByUsername(bootstrapAdmin.getUsername()).isPresent()) {
+        if (adminUserRepository.findByUsername(username).isPresent()) {
             return;
         }
         KbAdminUser user = new KbAdminUser();
-        user.setUsername(bootstrapAdmin.getUsername());
-        user.setPasswordHash(passwordEncoder.encode(bootstrapAdmin.getPassword()));
-        user.setDisplayName(bootstrapAdmin.getDisplayName());
-        user.setRoleCode(bootstrapAdmin.getRoleCode());
+        user.setUsername(username);
+        user.setPasswordHash(passwordEncoder.encode(password));
+        user.setDisplayName(displayName);
+        user.setRoleCode(roleCode);
         user.setStatus("active");
         adminUserRepository.save(user);
-        log.warn("Bootstrapped local admin account '{}'. Change the password before exposing this environment.", bootstrapAdmin.getUsername());
+        log.warn("Bootstrapped {} '{}'. Change the password before exposing this environment.", label, username);
     }
 }

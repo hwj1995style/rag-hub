@@ -62,11 +62,30 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
+    public PageResponse<Map<String, Object>> listQueryLogs(String sessionId, String queryText, Integer pageNo, Integer pageSize) {
+        int currentPage = pageNo == null ? 1 : pageNo;
+        int currentSize = pageSize == null ? 20 : pageSize;
+        Specification<KbQueryLog> spec = Specification.where(null);
+        if (sessionId != null && !sessionId.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.equal(root.get("sessionId"), sessionId));
+        }
+        if (queryText != null && !queryText.isBlank()) {
+            spec = spec.and((root, query, cb) -> cb.like(root.get("queryText"), "%" + queryText.trim() + "%"));
+        }
+        var page = queryLogRepository.findAll(
+                spec,
+                PageRequest.of(Math.max(currentPage - 1, 0), currentSize, Sort.by(Sort.Direction.DESC, "createdAt")));
+        List<Map<String, Object>> items = page.getContent().stream().map(this::toQueryLogListItem).toList();
+        return new PageResponse<>(page.getTotalElements(), currentPage, currentSize, items);
+    }
+
+    @Override
     public Map<String, Object> getQueryLog(String logId) {
         KbQueryLog log = queryLogRepository.findById(UUID.fromString(logId))
                 .orElseThrow(() -> new NotFoundException("query log not found"));
         return Map.of(
                 "log_id", log.getId().toString(),
+                "session_id", value(log.getSessionId()),
                 "query_text", log.getQueryText(),
                 "rewritten_query", value(log.getRewrittenQuery()),
                 "answer_text", value(log.getAnswerText()),
@@ -78,7 +97,23 @@ public class TaskServiceImpl implements TaskService {
         );
     }
 
-    private Object parseJsonArray(String raw) {
+    private Map<String, Object> toQueryLogListItem(KbQueryLog log) {
+        List<Object> citations = parseJsonArray(log.getCitationsJson());
+        List<Object> chunkIds = parseJsonArray(log.getRetrievedChunkIdsJson());
+        return Map.of(
+                "log_id", log.getId().toString(),
+                "session_id", value(log.getSessionId()),
+                "query_text", value(log.getQueryText()),
+                "rewritten_query", value(log.getRewrittenQuery()),
+                "trace_id", value(log.getTraceId()),
+                "latency_ms", log.getLatencyMs() == null ? 0 : log.getLatencyMs(),
+                "created_at", log.getCreatedAt() == null ? "" : log.getCreatedAt().toString(),
+                "citation_count", citations.size(),
+                "retrieved_chunk_count", chunkIds.size()
+        );
+    }
+
+    private List<Object> parseJsonArray(String raw) {
         if (raw == null || raw.isBlank()) {
             return List.of();
         }

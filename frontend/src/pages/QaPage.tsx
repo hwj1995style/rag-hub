@@ -1,7 +1,7 @@
 import { LinkOutlined, MessageOutlined } from '@ant-design/icons';
 import { useMutation } from '@tanstack/react-query';
 import { Alert, App, Button, Card, Col, Form, Input, InputNumber, Row, Space, Table, Typography } from 'antd';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { askQuestion } from '../services/api/qa';
 import type { Citation } from '../types/api';
@@ -20,6 +20,12 @@ export function QaPage() {
     },
   });
 
+  const sessionId = mutation.data?.sessionId || form.getFieldValue('sessionId');
+  const showNoAccessibleEvidence = useMemo(
+    () => mutation.isSuccess && !queryError && (mutation.data?.retrievedCount ?? 0) === 0,
+    [mutation.data?.retrievedCount, mutation.isSuccess, queryError],
+  );
+
   return (
     <div className="content-stack">
       <Card className="page-card">
@@ -29,7 +35,7 @@ export function QaPage() {
               QA Workbench
             </Typography.Title>
             <Typography.Paragraph type="secondary">
-              This page calls POST /api/qa/query and links to a query log detail page for traceability.
+              This page calls POST /api/qa/query and links to query log pages for traceability.
             </Typography.Paragraph>
             <Typography.Paragraph type="secondary">
               For the seeded local dataset, <Typography.Text code>business license</Typography.Text> is a stable sample query.
@@ -73,6 +79,7 @@ export function QaPage() {
                 <Typography.Text>retrievedCount: {mutation.data?.retrievedCount ?? '-'}</Typography.Text>
                 <Typography.Text>usedChunkCount: {mutation.data?.usedChunkCount ?? '-'}</Typography.Text>
                 {mutation.data?.sessionId && <Typography.Text>sessionId: {mutation.data.sessionId}</Typography.Text>}
+                {sessionId && <Link to={`/query-logs?sessionId=${sessionId}`}>Open session logs</Link>}
               </Space>
             </Card>
           </Col>
@@ -90,13 +97,27 @@ export function QaPage() {
         />
       )}
 
+      {showNoAccessibleEvidence && (
+        <Alert
+          type="info"
+          showIcon
+          message="No accessible evidence"
+          description="Matching documents may be restricted or unavailable for the current account."
+        />
+      )}
+
       <Card
         className="page-card"
         title="Citations"
         extra={
-          <Link to="/query-logs/66666666-6666-6666-6666-666666666666">
-            <LinkOutlined /> Query Log Sample
-          </Link>
+          <Space>
+            <Link to="/query-logs">
+              <LinkOutlined /> Query Logs
+            </Link>
+            <Link to="/query-logs/66666666-6666-6666-6666-666666666666">
+              <LinkOutlined /> Sample detail
+            </Link>
+          </Space>
         }
       >
         <Table<Citation>

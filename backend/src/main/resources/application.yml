@@ -1,4 +1,4 @@
-﻿server:
+server:
   port: 8080
 
 spring:
@@ -84,3 +84,9 @@ kb:
       password: ${KB_BOOTSTRAP_ADMIN_PASSWORD:ChangeMe123!}
       display-name: ${KB_BOOTSTRAP_ADMIN_DISPLAY_NAME:Local Admin}
       role-code: ${KB_BOOTSTRAP_ADMIN_ROLE:admin}
+    bootstrap-viewer:
+      enabled: ${KB_BOOTSTRAP_VIEWER_ENABLED:true}
+      username: ${KB_BOOTSTRAP_VIEWER_USERNAME:viewer}
+      password: ${KB_BOOTSTRAP_VIEWER_PASSWORD:viewer123}
+      display-name: ${KB_BOOTSTRAP_VIEWER_DISPLAY_NAME:Local Viewer}
+      role-code: ${KB_BOOTSTRAP_VIEWER_ROLE:viewer}

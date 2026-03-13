@@ -7,6 +7,7 @@ public class SecurityProperties {
 
     private final Jwt jwt = new Jwt();
     private final BootstrapAdmin bootstrapAdmin = new BootstrapAdmin();
+    private final BootstrapUser bootstrapViewer = new BootstrapUser();
 
     public Jwt getJwt() {
         return jwt;
@@ -14,6 +15,10 @@ public class SecurityProperties {
 
     public BootstrapAdmin getBootstrapAdmin() {
         return bootstrapAdmin;
+    }
+
+    public BootstrapUser getBootstrapViewer() {
+        return bootstrapViewer;
     }
 
     public static class Jwt {
@@ -52,6 +57,54 @@ public class SecurityProperties {
         private String password = "ChangeMe123!";
         private String displayName = "Local Admin";
         private String roleCode = "admin";
+
+        public boolean isEnabled() {
+            return enabled;
+        }
+
+        public void setEnabled(boolean enabled) {
+            this.enabled = enabled;
+        }
+
+        public String getUsername() {
+            return username;
+        }
+
+        public void setUsername(String username) {
+            this.username = username;
+        }
+
+        public String getPassword() {
+            return password;
+        }
+
+        public void setPassword(String password) {
+            this.password = password;
+        }
+
+        public String getDisplayName() {
+            return displayName;
+        }
+
+        public void setDisplayName(String displayName) {
+            this.displayName = displayName;
+        }
+
+        public String getRoleCode() {
+            return roleCode;
+        }
+
+        public void setRoleCode(String roleCode) {
+            this.roleCode = roleCode;
+        }
+    }
+
+    public static class BootstrapUser {
+        private boolean enabled = false;
+        private String username = "viewer";
+        private String password = "viewer123";
+        private String displayName = "Demo Viewer";
+        private String roleCode = "viewer";
 
         public boolean isEnabled() {
             return enabled;

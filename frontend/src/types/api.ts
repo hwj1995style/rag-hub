@@ -1,4 +1,4 @@
-export type ApiEnvelope<T> = { code: string; message: string; traceId: string; data: T; };
+﻿export type ApiEnvelope<T> = { code: string; message: string; traceId: string; data: T; };
 export type LoginResponse = { tokenType: string; accessToken: string; expiresInSeconds: number; user: { userId: string; username: string; displayName: string; roleCode: string; }; };
 export type PageResponse<T> = { total: number; pageNo: number; pageSize: number; items: T[]; };
 export type DocumentListItem = { documentId: string; title: string; bizDomain: string; department: string; status: string; currentVersionId: string; updatedAt: string; };
@@ -9,6 +9,7 @@ export type SearchResponse = { total: number; items: SearchItem[]; };
 export type Citation = { documentId: string; documentTitle: string; titlePath: string; locator: string; snippet: string; };
 export type QaResponse = { answer: string; confidence: number; citations: Citation[]; retrievedCount: number; usedChunkCount: number; sessionId: string; };
 export type TaskResponse = { taskId: string; taskType: string; sourceUri: string; documentId: string; versionId: string; status: string; step: string; retryCount: number; errorMessage: string | null; createdAt: string | null; updatedAt: string | null; startedAt: string | null; finishedAt: string | null; };
+export type QueryLogListItem = { log_id: string; session_id: string; query_text: string; rewritten_query: string; trace_id: string; latency_ms: number; created_at: string; citation_count: number; retrieved_chunk_count: number; };
 export type QueryLogDetail = { log_id: string; query_text: string; rewritten_query: string; answer_text: string; retrieved_chunk_ids: string[]; citations: Citation[]; feedback_score: number | null; latency_ms: number | null; trace_id: string; session_id?: string; created_at?: string; };
 export type PermissionBindResponse = { resource_type: string; resource_id: string; policy_count: number; };
 export type UploadResponse = { document_id: string; version_id: string; task_id: string; status: string; };

@@ -18,7 +18,7 @@ import {
   Typography,
 } from 'antd';
 import { Link, useParams } from 'react-router-dom';
-import { activateDocumentVersion, getDocument, getDocumentChunks, reparseDocument } from '../services/api/documents';
+import { getDocument, getDocumentChunks, reparseDocument, activateDocumentVersion } from '../services/api/documents';
 import { useAuthStore } from '../stores/authStore';
 import type { ChunkItem, TaskResponse } from '../types/api';
 import { formatDateTime, isAdmin } from '../utils/format';
@@ -93,6 +93,9 @@ export function DocumentDetailPage() {
     },
   ];
 
+  const detailError = detailQuery.error instanceof Error ? detailQuery.error.message : null;
+  const chunkError = chunkQuery.error instanceof Error ? chunkQuery.error.message : null;
+
   return (
     <div className="content-stack">
       <Card className="page-card">
@@ -113,6 +116,24 @@ export function DocumentDetailPage() {
           </Space>
         </Space>
       </Card>
+
+      {detailError && (
+        <Alert
+          type="error"
+          showIcon
+          message="Failed to load document"
+          description={detailError}
+        />
+      )}
+
+      {!detailError && chunkError && (
+        <Alert
+          type="warning"
+          showIcon
+          message="Chunk preview is unavailable"
+          description={chunkError}
+        />
+      )}
 
       {reparseResult && (
         <Alert
@@ -136,119 +157,121 @@ export function DocumentDetailPage() {
         />
       )}
 
-      <Row gutter={[20, 20]}>
-        <Col xs={24} xl={15}>
-          <Card className="page-card" loading={detailQuery.isLoading}>
-            {detail && (
-              <Descriptions title="Base info" bordered column={1}>
-                <Descriptions.Item label="Title">{detail.title}</Descriptions.Item>
-                <Descriptions.Item label="Doc code">{detail.doc_code}</Descriptions.Item>
-                <Descriptions.Item label="Source type">{detail.source_type}</Descriptions.Item>
-                <Descriptions.Item label="Source uri">{detail.source_uri || '-'}</Descriptions.Item>
-                <Descriptions.Item label="Domain">{detail.biz_domain || '-'}</Descriptions.Item>
-                <Descriptions.Item label="Department">{detail.department || '-'}</Descriptions.Item>
-                <Descriptions.Item label="Security">{detail.security_level}</Descriptions.Item>
-                <Descriptions.Item label="Status"><Tag color="green">{detail.status}</Tag></Descriptions.Item>
-              </Descriptions>
-            )}
-          </Card>
+      {!detailError && (
+        <Row gutter={[20, 20]}>
+          <Col xs={24} xl={15}>
+            <Card className="page-card" loading={detailQuery.isLoading}>
+              {detail && (
+                <Descriptions title="Base info" bordered column={1}>
+                  <Descriptions.Item label="Title">{detail.title}</Descriptions.Item>
+                  <Descriptions.Item label="Doc code">{detail.doc_code}</Descriptions.Item>
+                  <Descriptions.Item label="Source type">{detail.source_type}</Descriptions.Item>
+                  <Descriptions.Item label="Source uri">{detail.source_uri || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Domain">{detail.biz_domain || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Department">{detail.department || '-'}</Descriptions.Item>
+                  <Descriptions.Item label="Security">{detail.security_level}</Descriptions.Item>
+                  <Descriptions.Item label="Status"><Tag color="green">{detail.status}</Tag></Descriptions.Item>
+                </Descriptions>
+              )}
+            </Card>
 
-          <Card className="page-card" title="Chunk preview" style={{ marginTop: 20 }}>
-            <Table rowKey="chunkId" columns={chunkColumns} dataSource={chunks} pagination={false} />
-          </Card>
-        </Col>
+            <Card className="page-card" title="Chunk preview" style={{ marginTop: 20 }}>
+              <Table rowKey="chunkId" columns={chunkColumns} dataSource={chunks} pagination={false} />
+            </Card>
+          </Col>
 
-        <Col xs={24} xl={9}>
-          <Card className="page-card" title="Current version">
-            {currentVersion ? (
-              <Descriptions column={1} size="small">
-                <Descriptions.Item label="Version ID">
-                  <Space>
-                    <Typography.Text code>{currentVersion.version_id}</Typography.Text>
-                    <Button
-                      size="small"
-                      icon={<CopyOutlined />}
-                      onClick={async () => {
-                        await navigator.clipboard.writeText(currentVersion.version_id);
-                        void message.success('Current version ID copied');
-                      }}
-                    >
-                      Copy
+          <Col xs={24} xl={9}>
+            <Card className="page-card" title="Current version">
+              {currentVersion ? (
+                <Descriptions column={1} size="small">
+                  <Descriptions.Item label="Version ID">
+                    <Space>
+                      <Typography.Text code>{currentVersion.version_id}</Typography.Text>
+                      <Button
+                        size="small"
+                        icon={<CopyOutlined />}
+                        onClick={async () => {
+                          await navigator.clipboard.writeText(currentVersion.version_id);
+                          void message.success('Current version ID copied');
+                        }}
+                      >
+                        Copy
+                      </Button>
+                    </Space>
+                  </Descriptions.Item>
+                  <Descriptions.Item label="Version no">{currentVersion.version_no}</Descriptions.Item>
+                  <Descriptions.Item label="Parse status">{currentVersion.parse_status}</Descriptions.Item>
+                  <Descriptions.Item label="Index status">{currentVersion.index_status}</Descriptions.Item>
+                  <Descriptions.Item label="Effective from">{formatDateTime(currentVersion.effective_from)}</Descriptions.Item>
+                </Descriptions>
+              ) : (
+                <Typography.Text type="secondary">No version data</Typography.Text>
+              )}
+            </Card>
+
+            {isAdmin(roleCode) && (
+              <>
+                <Card className="page-card" title="Reparse" style={{ marginTop: 20 }}>
+                  <Typography.Paragraph type="secondary">
+                    Use this to enqueue a new reparse task for the current document.
+                  </Typography.Paragraph>
+                  <Form
+                    form={reparseForm}
+                    layout="vertical"
+                    initialValues={{ forceReindex: true }}
+                    onFinish={(values) => reparseMutation.mutate(values)}
+                  >
+                    <Form.Item name="reason" label="Reason">
+                      <Input.TextArea rows={3} placeholder="For example: refresh chunks after parser update" />
+                    </Form.Item>
+                    <Form.Item name="forceReindex" label="Force reindex" valuePropName="checked">
+                      <Switch checkedChildren="Yes" unCheckedChildren="No" />
+                    </Form.Item>
+                    <Button type="primary" htmlType="submit" loading={reparseMutation.isPending} icon={<ReloadOutlined />}>
+                      Submit reparse
+                    </Button>
+                  </Form>
+                </Card>
+
+                <Card className="page-card" title="Activate version" style={{ marginTop: 20 }}>
+                  <Typography.Paragraph type="secondary">
+                    The current API does not expose version history, so this panel offers quick-fill helpers plus manual entry.
+                  </Typography.Paragraph>
+                  <Space wrap style={{ marginBottom: 16 }}>
+                    {currentVersion && (
+                      <Button onClick={() => activateForm.setFieldValue('versionId', currentVersion.version_id)}>
+                        Use current version ID
+                      </Button>
+                    )}
+                    {knownSeedHistoryVersion && (
+                      <Button onClick={() => activateForm.setFieldValue('versionId', knownSeedHistoryVersion)}>
+                        Use seeded history version
+                      </Button>
+                    )}
+                    <Button onClick={() => activateForm.setFieldValue('effectiveFrom', new Date().toISOString())}>
+                      Fill current timestamp
                     </Button>
                   </Space>
-                </Descriptions.Item>
-                <Descriptions.Item label="Version no">{currentVersion.version_no}</Descriptions.Item>
-                <Descriptions.Item label="Parse status">{currentVersion.parse_status}</Descriptions.Item>
-                <Descriptions.Item label="Index status">{currentVersion.index_status}</Descriptions.Item>
-                <Descriptions.Item label="Effective from">{formatDateTime(currentVersion.effective_from)}</Descriptions.Item>
-              </Descriptions>
-            ) : (
-              <Typography.Text type="secondary">No version data</Typography.Text>
+                  <Form form={activateForm} layout="vertical" onFinish={(values) => activateMutation.mutate(values)}>
+                    <Form.Item name="versionId" label="Target version ID" rules={[{ required: true }]}>
+                      <Input placeholder="Enter target version UUID" />
+                    </Form.Item>
+                    <Form.Item name="effectiveFrom" label="Effective from">
+                      <Input placeholder="2026-03-10T00:00:00+08:00 or ISO timestamp" />
+                    </Form.Item>
+                    <Form.Item name="remark" label="Remark">
+                      <Input.TextArea rows={3} placeholder="Optional activation note" />
+                    </Form.Item>
+                    <Button type="primary" htmlType="submit" loading={activateMutation.isPending} icon={<CheckCircleOutlined />}>
+                      Activate
+                    </Button>
+                  </Form>
+                </Card>
+              </>
             )}
-          </Card>
-
-          {isAdmin(roleCode) && (
-            <>
-              <Card className="page-card" title="Reparse" style={{ marginTop: 20 }}>
-                <Typography.Paragraph type="secondary">
-                  Use this to enqueue a new reparse task for the current document.
-                </Typography.Paragraph>
-                <Form
-                  form={reparseForm}
-                  layout="vertical"
-                  initialValues={{ forceReindex: true }}
-                  onFinish={(values) => reparseMutation.mutate(values)}
-                >
-                  <Form.Item name="reason" label="Reason">
-                    <Input.TextArea rows={3} placeholder="For example: refresh chunks after parser update" />
-                  </Form.Item>
-                  <Form.Item name="forceReindex" label="Force reindex" valuePropName="checked">
-                    <Switch checkedChildren="Yes" unCheckedChildren="No" />
-                  </Form.Item>
-                  <Button type="primary" htmlType="submit" loading={reparseMutation.isPending} icon={<ReloadOutlined />}>
-                    Submit reparse
-                  </Button>
-                </Form>
-              </Card>
-
-              <Card className="page-card" title="Activate version" style={{ marginTop: 20 }}>
-                <Typography.Paragraph type="secondary">
-                  The current API does not expose version history, so this panel offers quick-fill helpers plus manual entry.
-                </Typography.Paragraph>
-                <Space wrap style={{ marginBottom: 16 }}>
-                  {currentVersion && (
-                    <Button onClick={() => activateForm.setFieldValue('versionId', currentVersion.version_id)}>
-                      Use current version ID
-                    </Button>
-                  )}
-                  {knownSeedHistoryVersion && (
-                    <Button onClick={() => activateForm.setFieldValue('versionId', knownSeedHistoryVersion)}>
-                      Use seeded history version
-                    </Button>
-                  )}
-                  <Button onClick={() => activateForm.setFieldValue('effectiveFrom', new Date().toISOString())}>
-                    Fill current timestamp
-                  </Button>
-                </Space>
-                <Form form={activateForm} layout="vertical" onFinish={(values) => activateMutation.mutate(values)}>
-                  <Form.Item name="versionId" label="Target version ID" rules={[{ required: true }]}>
-                    <Input placeholder="Enter target version UUID" />
-                  </Form.Item>
-                  <Form.Item name="effectiveFrom" label="Effective from">
-                    <Input placeholder="2026-03-10T00:00:00+08:00 or ISO timestamp" />
-                  </Form.Item>
-                  <Form.Item name="remark" label="Remark">
-                    <Input.TextArea rows={3} placeholder="Optional activation note" />
-                  </Form.Item>
-                  <Button type="primary" htmlType="submit" loading={activateMutation.isPending} icon={<CheckCircleOutlined />}>
-                    Activate
-                  </Button>
-                </Form>
-              </Card>
-            </>
-          )}
-        </Col>
-      </Row>
+          </Col>
+        </Row>
+      )}
     </div>
   );
 }

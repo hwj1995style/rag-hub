@@ -104,6 +104,13 @@ class KnowledgeBaseApiIntegrationTest {
     }
 
     @Test
+    void shouldRejectDocumentDetailWhenViewerHasNoMatchingPolicy() throws Exception {
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code", is("KB-40301")));
+    }
+    @Test
     void shouldReturnDocumentChunks() throws Exception {
         mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111/chunks")
                         .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
@@ -112,6 +119,63 @@ class KnowledgeBaseApiIntegrationTest {
                 .andExpect(jsonPath("$.data.items", hasSize(3)));
     }
 
+    @Test
+    void shouldRejectDocumentChunksWhenViewerHasNoMatchingPolicy() throws Exception {
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111/chunks")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code", is("KB-40301")));
+    }
+
+    @Test
+    void shouldAllowDocumentReadWhenViewerRolePolicyMatches() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "viewer", "effect": "allow"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.document_id", is("11111111-1111-1111-1111-111111111111")));
+
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111/chunks")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(3)));
+    }
+
+    @Test
+    void shouldPreferDenyOverAllowForDocumentRead() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "viewer", "effect": "allow"},
+                                    {"subjectType": "user", "subjectValue": "viewer", "effect": "deny"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/documents/11111111-1111-1111-1111-111111111111")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123")))
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.code", is("KB-40301")));
+    }
     @Test
     void shouldReturnTaskById() throws Exception {
         mockMvc.perform(get("/api/tasks/44444444-4444-4444-4444-444444444444")
@@ -165,6 +229,69 @@ class KnowledgeBaseApiIntegrationTest {
                 .andExpect(jsonPath("$.data.citations", hasSize(1)));
     }
 
+    @Test
+    void shouldListQueryLogs() throws Exception {
+        mockMvc.perform(get("/api/query-logs")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(1)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].log_id", is("66666666-6666-6666-6666-666666666666")))
+                .andExpect(jsonPath("$.data.items[0].session_id", is("seed-session-001")))
+                .andExpect(jsonPath("$.data.items[0].citation_count", is(1)));
+    }
+    @Test
+    void shouldFilterQaResultsWhenViewerHasNoMatchingPolicy() throws Exception {
+        mockMvc.perform(post("/api/qa/query")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "business license",
+                                  "topK": 5,
+                                  "returnCitations": true,
+                                  "sessionId": "viewer-session-001"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.retrievedCount", is(0)))
+                .andExpect(jsonPath("$.data.usedChunkCount", is(0)))
+                .andExpect(jsonPath("$.data.citations", hasSize(0)))
+                .andExpect(jsonPath("$.data.sessionId", is("viewer-session-001")));
+    }
+
+    @Test
+    void shouldAllowQaResultsWhenViewerRolePolicyMatches() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "viewer", "effect": "allow"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/qa/query")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "business license",
+                                  "topK": 5,
+                                  "returnCitations": true,
+                                  "sessionId": "viewer-session-002"
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.retrievedCount", is(1)))
+                .andExpect(jsonPath("$.data.citations", hasSize(1)))
+                .andExpect(jsonPath("$.data.citations[0].documentId", is("11111111-1111-1111-1111-111111111111")));
+    }
     @Test
     void shouldPersistQueryLogWhenQaCalled() throws Exception {
         long before = queryLogRepository.count();
@@ -247,6 +374,52 @@ class KnowledgeBaseApiIntegrationTest {
                 .andExpect(jsonPath("$.data.current_version.version_no", is("v0.9")));
     }
 
+    @Test
+    void shouldFilterSearchResultsWhenViewerHasNoMatchingPolicy() throws Exception {
+        mockMvc.perform(post("/api/search/query")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "business license",
+                                  "topK": 10
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(0)))
+                .andExpect(jsonPath("$.data.items", hasSize(0)));
+    }
+
+    @Test
+    void shouldAllowSearchResultsWhenViewerRolePolicyMatches() throws Exception {
+        mockMvc.perform(post("/api/permissions/bind")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("tester", "test123456"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "resourceType": "document",
+                                  "resourceId": "11111111-1111-1111-1111-111111111111",
+                                  "policies": [
+                                    {"subjectType": "role", "subjectValue": "viewer", "effect": "allow"}
+                                  ]
+                                }
+                                """))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/search/query")
+                        .header(HttpHeaders.AUTHORIZATION, bearerToken("viewer", "viewer123"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {
+                                  "query": "business license",
+                                  "topK": 10
+                                }
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.total", is(1)))
+                .andExpect(jsonPath("$.data.items", hasSize(1)))
+                .andExpect(jsonPath("$.data.items[0].locator", is("p12")));
+    }
     @Test
     void shouldSearchSeedChunks() throws Exception {
         mockMvc.perform(post("/api/search/query")

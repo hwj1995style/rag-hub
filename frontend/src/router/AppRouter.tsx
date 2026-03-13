@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+﻿import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppLayout } from '../layouts/AppLayout';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { DocumentChunksPage } from '../pages/DocumentChunksPage';
@@ -9,6 +9,7 @@ import { NotFoundPage } from '../pages/NotFoundPage';
 import { PermissionsPage } from '../pages/PermissionsPage';
 import { QaPage } from '../pages/QaPage';
 import { QueryLogPage } from '../pages/QueryLogPage';
+import { QueryLogsPage } from '../pages/QueryLogsPage';
 import { SearchPage } from '../pages/SearchPage';
 import { TaskDetailPage } from '../pages/TaskDetailPage';
 import { TasksPage } from '../pages/TasksPage';
@@ -28,6 +29,7 @@ export function AppRouter() {
           <Route path="/permissions" element={<PermissionsPage />} />
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
+          <Route path="/query-logs" element={<QueryLogsPage />} />
           <Route path="/query-logs/:logId" element={<QueryLogPage />} />
         </Route>
       </Route>

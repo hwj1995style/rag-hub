@@ -1,4 +1,4 @@
-import {
+﻿import {
   BookOutlined,
   FileSearchOutlined,
   LoginOutlined,
@@ -26,11 +26,7 @@ export function AppLayout() {
       { key: '/search', icon: <SearchOutlined />, label: 'Search' },
       { key: '/qa', icon: <FileSearchOutlined />, label: 'QA' },
       { key: '/tasks', icon: <UnorderedListOutlined />, label: 'Tasks' },
-      {
-        key: '/query-logs/66666666-6666-6666-6666-666666666666',
-        icon: <FileSearchOutlined />,
-        label: 'Query Log',
-      },
+      { key: '/query-logs', icon: <FileSearchOutlined />, label: 'Query Logs' },
     ];
 
     if (isAdmin(user?.roleCode)) {
@@ -44,6 +40,9 @@ export function AppLayout() {
     items.find((item) => {
       if (item.key === '/tasks') {
         return location.pathname.startsWith('/tasks');
+      }
+      if (item.key === '/query-logs') {
+        return location.pathname.startsWith('/query-logs');
       }
       return location.pathname.startsWith(item.key.split('/:')[0]);
     })?.key ?? '/documents';
@@ -73,7 +72,7 @@ export function AppLayout() {
                 Separated Frontend Admin
               </Typography.Title>
               <Typography.Paragraph style={{ color: 'rgba(255,255,255,0.85)', margin: '8px 0 0' }}>
-                Phase 4 adds task center workflows, batch-import follow-up, and tighter operational handoff between admin pages.
+                Phase 4 adds task center workflows, batch-import follow-up, query-log browsing, and tighter operational handoff between admin pages.
               </Typography.Paragraph>
             </div>
             <Space size="middle">

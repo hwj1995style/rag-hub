@@ -1,4 +1,4 @@
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+﻿import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
 import { Alert, Button, Card, Descriptions, Form, Input, Space, Table, Tag, Typography } from 'antd';
 import { Link, useNavigate, useParams } from 'react-router-dom';
@@ -30,6 +30,7 @@ export function QueryLogPage() {
             </Typography.Paragraph>
           </div>
           <Space>
+            <Link to="/query-logs">Back to query logs</Link>
             <Link to="/qa">Back to QA</Link>
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
               Refresh
@@ -55,6 +56,7 @@ export function QueryLogPage() {
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
             Open
           </Button>
+          <Button onClick={() => navigate('/query-logs')}>Open query log list</Button>
           <Button onClick={() => navigate('/query-logs/66666666-6666-6666-6666-666666666666')}>Use sample log</Button>
         </Form>
       </Card>
@@ -72,7 +74,9 @@ export function QueryLogPage() {
         {query.data && (
           <Descriptions bordered column={1}>
             <Descriptions.Item label="Log ID">{query.data.log_id}</Descriptions.Item>
-            <Descriptions.Item label="Session ID">{query.data.session_id || '-'}</Descriptions.Item>
+            <Descriptions.Item label="Session ID">
+              {query.data.session_id ? <Link to={`/query-logs?sessionId=${query.data.session_id}`}>{query.data.session_id}</Link> : '-'}
+            </Descriptions.Item>
             <Descriptions.Item label="Created at">{formatDateTime(query.data.created_at)}</Descriptions.Item>
             <Descriptions.Item label="Latency">{query.data.latency_ms ? `${query.data.latency_ms} ms` : '-'}</Descriptions.Item>
             <Descriptions.Item label="Trace ID">{query.data.trace_id}</Descriptions.Item>

@@ -12,11 +12,14 @@ import com.example.kb.qa.QaContext;
 import com.example.kb.repository.KbQueryLogRepository;
 import com.example.kb.rewrite.QueryRewriteResult;
 import com.example.kb.rewrite.QueryRewriteService;
+import com.example.kb.service.DocumentAccessService;
 import com.example.kb.service.QaService;
 import com.example.kb.service.SearchService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,19 +33,22 @@ public class QaServiceImpl implements QaService {
     private final LlmClient llmClient;
     private final QueryRewriteService queryRewriteService;
     private final ObjectMapper objectMapper;
+    private final DocumentAccessService documentAccessService;
 
     public QaServiceImpl(SearchService searchService,
                          KbQueryLogRepository queryLogRepository,
                          ContextAssembler contextAssembler,
                          LlmClient llmClient,
                          QueryRewriteService queryRewriteService,
-                         ObjectMapper objectMapper) {
+                         ObjectMapper objectMapper,
+                         DocumentAccessService documentAccessService) {
         this.searchService = searchService;
         this.queryLogRepository = queryLogRepository;
         this.contextAssembler = contextAssembler;
         this.llmClient = llmClient;
         this.queryRewriteService = queryRewriteService;
         this.objectMapper = objectMapper;
+        this.documentAccessService = documentAccessService;
     }
 
     @Override
@@ -50,20 +56,30 @@ public class QaServiceImpl implements QaService {
     public QaResponse answer(QaRequest request) {
         long start = System.currentTimeMillis();
         QueryRewriteResult rewrite = queryRewriteService.rewrite(request.query());
-        List<SearchItemResponse> hits = searchService.search(new SearchRequest(rewrite.rewrittenQuery(), request.topK(), request.filters()));
+        List<SearchItemResponse> hits = filterAccessibleHits(
+                searchService.search(new SearchRequest(rewrite.rewrittenQuery(), request.topK(), request.filters()))
+        );
+
         QaResponse response;
         if (hits.isEmpty()) {
-            response = new QaResponse("知识库未检索到足够证据，暂时无法回答。", 0.0, List.of(), 0, 0, request.sessionId());
+            response = new QaResponse(
+                    "No sufficient evidence was found in the knowledge base to answer this question.",
+                    0.0,
+                    List.of(),
+                    0,
+                    0,
+                    request.sessionId()
+            );
         } else {
             QaContext context = contextAssembler.assemble(rewrite.rewrittenQuery(), hits);
             String answer = llmClient.generate(new LlmGenerationRequest(
                     rewrite.rewrittenQuery(),
                     context.assembledContext(),
                     List.of(
-                            "仅基于提供的上下文回答",
-                            "优先提炼事实结论",
-                            "保留必要的限定条件",
-                            "如果证据不足要明确指出"
+                            "Answer only from the provided context.",
+                            "Prefer concise factual conclusions.",
+                            "Keep important scope limits and conditions.",
+                            "State clearly when the evidence is insufficient."
                     )
             )).answer();
             response = new QaResponse(
@@ -77,6 +93,17 @@ public class QaServiceImpl implements QaService {
         }
         saveQueryLog(request, rewrite, hits, response, (int) (System.currentTimeMillis() - start));
         return response;
+    }
+
+    private List<SearchItemResponse> filterAccessibleHits(List<SearchItemResponse> hits) {
+        Set<UUID> documentIds = hits.stream()
+                .map(SearchItemResponse::documentId)
+                .map(UUID::fromString)
+                .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
+        Set<UUID> accessibleIds = documentAccessService.filterAccessibleDocumentIds(documentIds);
+        return hits.stream()
+                .filter(hit -> accessibleIds.contains(UUID.fromString(hit.documentId())))
+                .toList();
     }
 
     private double confidence(List<SearchItemResponse> hits) {
