@@ -1,10 +1,12 @@
-import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
+﻿import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { useQuery } from '@tanstack/react-query';
-import { Alert, Button, Card, Descriptions, Form, Input, Space, Tag, Typography } from 'antd';
-import { useMemo } from 'react';
+import { Alert, Button, Card, Descriptions, Form, Input, Space, Switch, Tag, Typography } from 'antd';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getTask } from '../services/api/tasks';
 import { formatDateTime } from '../utils/format';
+
+const ACTIVE_TASK_STATUSES = new Set(['pending', 'running', 'processing']);
 
 function getTaskStatusColor(status?: string): string {
   switch (status) {
@@ -26,19 +28,29 @@ export function TaskDetailPage() {
   const navigate = useNavigate();
   const { taskId = '' } = useParams();
   const [form] = Form.useForm();
+  const [autoRefresh, setAutoRefresh] = useState(true);
 
   const query = useQuery({
     queryKey: ['task', taskId],
     queryFn: () => getTask(taskId),
     enabled: Boolean(taskId),
+    refetchInterval: autoRefresh ? 10_000 : false,
   });
 
-  const statusTag = useMemo(() => {
+  useEffect(() => {
+    form.setFieldsValue({ taskId });
+  }, [form, taskId]);
+
+  useEffect(() => {
     if (!query.data?.status) {
-      return <Tag>unknown</Tag>;
+      return;
     }
-    return <Tag color={getTaskStatusColor(query.data.status)}>{query.data.status}</Tag>;
+    setAutoRefresh(ACTIVE_TASK_STATUSES.has(query.data.status));
   }, [query.data?.status]);
+
+  const task = query.data;
+  const isActive = Boolean(task?.status && ACTIVE_TASK_STATUSES.has(task.status));
+  const isFailed = task?.status === 'failed';
 
   return (
     <div className="content-stack">
@@ -49,17 +61,43 @@ export function TaskDetailPage() {
               Task Detail
             </Typography.Title>
             <Typography.Paragraph type="secondary" style={{ marginBottom: 0 }}>
-              Inspect ingest, batch-import, or reparse tasks, then jump back to the owning document when one exists.
+              Inspect ingest, batch-import, or reparse work, keep active tasks refreshing, and jump back to the owning document or filtered task list.
             </Typography.Paragraph>
           </div>
-          <Space>
+          <Space wrap>
             <Link to="/tasks">Back to task center</Link>
+            <Typography.Text type="secondary">Auto refresh</Typography.Text>
+            <Switch checked={autoRefresh} onChange={setAutoRefresh} />
             <Button icon={<ReloadOutlined />} onClick={() => void query.refetch()} loading={query.isFetching}>
               Refresh
             </Button>
           </Space>
         </Space>
       </Card>
+
+      {isActive && (
+        <Alert
+          type="info"
+          showIcon
+          message="This task is still active"
+          description="Auto refresh stays enabled while the task is pending or running so you can watch status changes without leaving the page."
+        />
+      )}
+
+      {isFailed && task?.documentId && (
+        <Alert
+          type="warning"
+          showIcon
+          message="Task needs follow-up"
+          description={
+            <Space wrap>
+              <Typography.Text>{task.errorMessage || 'The task finished with an error.'}</Typography.Text>
+              <Link to={`/documents/${task.documentId}`}>Open document</Link>
+              <Link to={`/tasks?documentId=${task.documentId}&status=failed`}>Open failed tasks for this document</Link>
+            </Space>
+          }
+        />
+      )}
 
       <Card className="page-card" title="Lookup another task">
         <Form
@@ -78,7 +116,7 @@ export function TaskDetailPage() {
           <Button type="primary" htmlType="submit" icon={<SearchOutlined />}>
             Open
           </Button>
-          <Button onClick={() => navigate('/tasks/44444444-4444-4444-4444-444444444444')}>Use sample task</Button>
+          <Button onClick={() => navigate('/tasks')}>Open task center</Button>
         </Form>
       </Card>
 
@@ -93,31 +131,47 @@ export function TaskDetailPage() {
             description={query.error instanceof Error ? query.error.message : 'Request failed'}
           />
         )}
-        {query.data && (
-          <Descriptions bordered column={1}>
-            <Descriptions.Item label="Task type">{query.data.taskType}</Descriptions.Item>
-            <Descriptions.Item label="Status">{statusTag}</Descriptions.Item>
-            <Descriptions.Item label="Current step">{query.data.step || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Retry count">{query.data.retryCount}</Descriptions.Item>
-            <Descriptions.Item label="Source URI">{query.data.sourceUri || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Document">
-              {query.data.documentId ? <Link to={`/documents/${query.data.documentId}`}>{query.data.documentId}</Link> : '-'}
-            </Descriptions.Item>
-            <Descriptions.Item label="Version ID">{query.data.versionId || '-'}</Descriptions.Item>
-            <Descriptions.Item label="Created at">{formatDateTime(query.data.createdAt)}</Descriptions.Item>
-            <Descriptions.Item label="Started at">{formatDateTime(query.data.startedAt)}</Descriptions.Item>
-            <Descriptions.Item label="Finished at">{formatDateTime(query.data.finishedAt)}</Descriptions.Item>
-            <Descriptions.Item label="Error message">{query.data.errorMessage || '-'}</Descriptions.Item>
-          </Descriptions>
+        {task && (
+          <>
+            <Space wrap style={{ marginBottom: 16 }}>
+              <Tag color={getTaskStatusColor(task.status)}>{task.status || 'unknown'}</Tag>
+              <Tag>{task.taskType || 'unknown'}</Tag>
+              {task.documentId && <Link to={`/documents/${task.documentId}`}>Open document</Link>}
+              {task.documentId && <Link to={`/tasks?documentId=${task.documentId}`}>Open document tasks</Link>}
+              {task.taskType && <Link to={`/tasks?taskType=${task.taskType}`}>Open {task.taskType} tasks</Link>}
+              {task.status && <Link to={`/tasks?status=${task.status}`}>Open {task.status} tasks</Link>}
+            </Space>
+
+            <Descriptions bordered column={1}>
+              <Descriptions.Item label="Task type">{task.taskType}</Descriptions.Item>
+              <Descriptions.Item label="Status">
+                <Tag color={getTaskStatusColor(task.status)}>{task.status || 'unknown'}</Tag>
+              </Descriptions.Item>
+              <Descriptions.Item label="Current step">{task.step || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Retry count">{task.retryCount}</Descriptions.Item>
+              <Descriptions.Item label="Source URI">
+                <Typography.Text copyable={Boolean(task.sourceUri)}>{task.sourceUri || '-'}</Typography.Text>
+              </Descriptions.Item>
+              <Descriptions.Item label="Document">
+                {task.documentId ? <Link to={`/documents/${task.documentId}`}>{task.documentId}</Link> : '-'}
+              </Descriptions.Item>
+              <Descriptions.Item label="Version ID">{task.versionId || '-'}</Descriptions.Item>
+              <Descriptions.Item label="Created at">{formatDateTime(task.createdAt)}</Descriptions.Item>
+              <Descriptions.Item label="Updated at">{formatDateTime(task.updatedAt)}</Descriptions.Item>
+              <Descriptions.Item label="Started at">{formatDateTime(task.startedAt)}</Descriptions.Item>
+              <Descriptions.Item label="Finished at">{formatDateTime(task.finishedAt)}</Descriptions.Item>
+              <Descriptions.Item label="Error message">{task.errorMessage || '-'}</Descriptions.Item>
+            </Descriptions>
+          </>
         )}
 
-        {query.data?.errorMessage && (
+        {task?.errorMessage && (
           <Alert
             style={{ marginTop: 16 }}
             type="error"
             showIcon
             message="Task reported an error"
-            description={query.data.errorMessage}
+            description={task.errorMessage}
           />
         )}
       </Card>

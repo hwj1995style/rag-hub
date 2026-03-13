@@ -286,6 +286,7 @@ public class DocumentServiceImpl implements DocumentService {
                 task.getRetryCount(),
                 task.getErrorMessage(),
                 task.getCreatedAt() == null ? null : task.getCreatedAt().toString(),
+                task.getUpdatedAt() == null ? null : task.getUpdatedAt().toString(),
                 task.getStartedAt() == null ? null : task.getStartedAt().toString(),
                 task.getFinishedAt() == null ? null : task.getFinishedAt().toString());
     }

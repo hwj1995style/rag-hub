@@ -78,6 +78,26 @@ test.describe('rag-hub core regression', () => {
     await expect(page).toHaveURL(taskHref ? new RegExp(`${taskHref}$`) : /\/tasks\//);
   });
 
+  test('task center quick views can focus failed and batch tasks', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/tasks');
+    await expect(page.getByRole('heading', { name: 'Task Center' })).toBeVisible();
+    await page.getByRole('button', { name: 'Failed tasks' }).click();
+    await expect(page).toHaveURL(/status=failed/);
+
+    await page.getByRole('button', { name: 'Batch imports' }).click();
+    await expect(page).toHaveURL(/taskType=batch_import/);
+  });
+
+  test('task center auto refresh can be enabled from quick controls', async ({ page }) => {
+    await login(page);
+
+    await page.goto('/tasks');
+    await page.getByRole('switch').first().click();
+    await expect(page.getByText('Auto refresh is enabled')).toBeVisible();
+  });
+
   test('admin can open the sample task detail page', async ({ page }) => {
     await login(page);
 
@@ -92,6 +112,17 @@ test.describe('rag-hub core regression', () => {
     await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
     await expect(page.getByText('Task ID:')).toContainText(taskId);
     await expect(page.getByText(/pending|running|success|failed/).first()).toBeVisible();
+  });
+
+  test('task detail keeps task list follow-up links visible', async ({ page }) => {
+    await login(page);
+
+    await page.goto(`/tasks?documentId=${seededDocumentId}`);
+    const firstTaskLink = page.locator('table a[href^="/tasks/"]').first();
+    await firstTaskLink.click();
+
+    await expect(page.getByRole('link', { name: /Open .* tasks/ }).first()).toBeVisible();
+    await expect(page.getByText('Updated at')).toBeVisible();
   });
 
   test('admin can open the sample query log detail page', async ({ page }) => {
@@ -150,7 +181,7 @@ test.describe('rag-hub core regression', () => {
 
     await expect(page).toHaveURL(/\/tasks\//);
     await expect(page.getByRole('heading', { name: 'Task Detail' })).toBeVisible();
-    await expect(page.getByText('batch_import')).toBeVisible();
+    await expect(page.getByText('batch_import', { exact: true }).first()).toBeVisible();
   });
 
   test('empty file upload shows a stable failure prompt', async ({ page }) => {

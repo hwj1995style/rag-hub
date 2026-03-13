@@ -11,6 +11,7 @@ public record TaskResponse(
         Integer retryCount,
         String errorMessage,
         String createdAt,
+        String updatedAt,
         String startedAt,
         String finishedAt
 ) {

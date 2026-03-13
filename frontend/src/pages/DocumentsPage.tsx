@@ -174,6 +174,7 @@ export function DocumentsPage() {
                 <Typography.Text>version: {actionState.payload.version_id}</Typography.Text>
                 <Link to={`/documents/${actionState.payload.document_id}`}>Open document</Link>
                 <Link to={`/tasks/${actionState.payload.task_id}`}>Open task {actionState.payload.task_id}</Link>
+                <Link to={`/tasks?documentId=${actionState.payload.document_id}`}>Open related tasks</Link>
               </Space>
             ) : (
               <Space wrap>
@@ -181,7 +182,7 @@ export function DocumentsPage() {
                 <Typography.Text>accepted: {actionState.payload.accepted_count}</Typography.Text>
                 <Typography.Text>tasks: {actionState.payload.task_count}</Typography.Text>
                 <Typography.Text>source: {actionState.payload.source_uri}</Typography.Text>
-                <Link to="/tasks">Open task center</Link>
+                <Link to="/tasks?taskType=batch_import">Open batch tasks</Link>
                 {actionState.payload.task_ids[0] && (
                   <Link to={`/tasks/${actionState.payload.task_ids[0]}`}>Open task {actionState.payload.task_ids[0]}</Link>
                 )}
