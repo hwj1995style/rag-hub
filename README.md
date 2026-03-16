@@ -9,21 +9,14 @@ flowchart TB
     N["Nginx 入口"]
     B["rag-hub-backend<br/>认证鉴权 / 文档管理 / 搜索 / QA / 任务 / 权限治理 / 查询日志"]
     P["parser-worker<br/>解析 / 分块 / 建索引"]
+    I["依赖组件<br/>MySQL / Redis / MinIO / Elasticsearch / Qdrant"]
 
     U --> F
     F --> N
     N --> B
     B --> P
-
-    B --> DB["MySQL<br/>业务数据 / 权限策略 / 任务 / 查询日志"]
-    B --> R["Redis<br/>缓存 / 协调"]
-    B --> M["MinIO<br/>文档存储"]
-    B --> ES["Elasticsearch<br/>全文检索"]
-    B --> Q["Qdrant<br/>向量检索"]
-
-    P --> M
-    P --> ES
-    P --> Q
+    B --> I
+    P --> I
 ```
 
 rag-hub 是一个面向文档接入、检索问答、权限治理和任务运营的 RAG 运维平台。
