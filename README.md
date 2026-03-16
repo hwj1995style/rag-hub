@@ -1,5 +1,23 @@
 # rag-hub
 
+## 系统功能架构图
+
+```mermaid
+flowchart LR
+    U["用户 / 管理员"] --> F["前端管理控制台<br/>登录 / 文档 / 搜索 / 问答 / 任务 / 权限 / 查询日志 / 中英文切换"]
+    F --> N["Nginx / 前端入口"]
+    N --> B["rag-hub-backend<br/>认证鉴权 / 文档管理 / 搜索 / QA / 任务中心 / 权限治理 / 查询日志"]
+    B --> DB["MySQL<br/>业务数据 / 权限策略 / 任务 / 查询日志"]
+    B --> M["MinIO<br/>文档文件存储"]
+    B --> ES["Elasticsearch<br/>全文检索"]
+    B --> Q["Qdrant<br/>向量检索"]
+    B --> R["Redis<br/>缓存 / 协调"]
+    B --> P["parser-worker<br/>解析 / 分块 / 建索引"]
+    P --> M
+    P --> ES
+    P --> Q
+```
+
 rag-hub 是一个面向文档接入、检索问答、权限治理和任务运营的 RAG 运维平台。
 
 当前仓库采用以下部署原则：
